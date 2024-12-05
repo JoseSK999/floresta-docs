@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # Run daily at 5 AM UTC
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  validate-snippets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone Floresta repository
+        run: |
+          git clone https://github.com/vinteumorg/Floresta.git
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build and run Snippet Checker
+        env:
+          CODE_DIR: ${{ github.workspace }}/Floresta
+        run: |
+          cd snippet-checker
+          cargo build --release
+          ./target/release/snippet_checker

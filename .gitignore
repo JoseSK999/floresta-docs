@@ -1,0 +1,11 @@
+book/
+# Auto generated .css and .js
+src/quiz/
+
+.idea
+.vscode
+.DS_Store
+
+target
+tmp
+Cargo.lock

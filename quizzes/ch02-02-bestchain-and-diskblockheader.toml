@@ -1,0 +1,45 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Which of the following describes the DiskBlockHeader in Floresta?"
+prompt.distractors = [
+  "It stores only the block header without metadata.",
+  "It holds block headers with block bodies.",
+  "It stores only validated blocks with metadata."
+]
+answer.answer = "It holds block headers and encodes block states."
+context = """
+The `DiskBlockHeader` in Floresta holds block headers along with metadata that encodes possible block states like FullyValid, Orphan, and HeadersOnly.
+"""
+id = "b11b0b7d-46fd-4453-9ba6-9cdbdbc0e0e9"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What does the BestChain struct represent in Floresta?"
+prompt.distractors = [
+  "It tracks all chain forks in memory.",
+  "It holds the best chain's last BlockHash only after validation.",
+  "It stores a list of validated blocks."
+]
+answer.answer = [
+  "It holds the current best chain's last BlockHash, validated or not.",
+  "It keeps track of the last validated block in the chain.",
+  "It keeps a list of alternative tips."
+]
+context = """
+The `BestChain` struct represents the current best chain's state, including the best block hash, last validated block and a list of alternative tips that might become the best chain.
+"""
+id = "6659d063-fbad-486e-b911-1b85c3bc6d5c"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "In what circumstance would the `best_block` and `validation_index` be equal in the BestChain struct?"
+prompt.distractors = [
+  "They cannot be equal as `validation_index` is a height and `best_block` a BlockHash.",
+  "When the node is in Initial Block Download (IBD).",
+  "When the chain has forks with unvalidated blocks."
+]
+answer.answer = "When all blocks in the best chain have been fully validated."
+context = """
+The `best_block` and `validation_index` would be equal when all blocks in the best chain have been fully validated, meaning the chain is up to date with validation.
+"""
+id = "40baab71-6907-45b0-97a5-aa363c5d923e"

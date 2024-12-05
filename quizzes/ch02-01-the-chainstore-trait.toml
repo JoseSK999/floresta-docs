@@ -1,0 +1,55 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What is the primary purpose of the ChainStore trait in Floresta?"
+prompt.distractors = [
+  "To manage peer-to-peer connections.",
+  "To validate blocks and headers.",
+  "To maintain the entire blockchain in memory."
+]
+answer.answer = "To interact with persisted storage."
+context = """
+The ChainStore trait is responsible for interacting with the chain's persisted storage, saving and loading accumulator state, block headers, and other chain-related data.
+"""
+id = "69a3bac8-7dbd-4722-9dda-2a5e506ada87"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Which of the following methods are used to save and load the accumulator state in ChainStore?"
+prompt.distractors = [
+  "`update_block_index` and `get_block_hash`",
+  "`save_height` and `load_height`",
+  "`flush`"
+]
+answer.answer = "`save_roots` and `load_roots`"
+context = """
+The `save_roots` and `load_roots` methods are used in the ChainStore trait to save and load the accumulator state, which is serialized as a `Vec<u8>`.
+"""
+id = "b944905f-c1e7-403c-95bb-c8f126bc8e88"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What does the `flush` method in ChainStore ensure?"
+prompt.distractors = [
+  "That only block headers are written to memory.",
+  "That all data is stored temporarily in memory.",
+  "That only block hashes are flushed to disk."
+]
+answer.answer = "That all saved data is written to disk."
+context = """
+The `flush` method in ChainStore ensures that any data saved in memory is written to disk, guaranteeing that it can be recovered after a crash.
+"""
+id = "a5cb47b2-84f0-4e37-805d-1a256839f3cc"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What are the three buckets used in the KvChainStore type?"
+prompt.distractors = [
+  "Headers bucket, Block bucket, Meta bucket",
+  "Index bucket, Meta bucket, Block bucket",
+  "Tx bucket, Index bucket, Meta bucket"
+]
+answer.answer = "Index bucket, Headers bucket, Meta bucket"
+context = """
+The `KvChainStore` type uses three buckets: the `index` bucket for block hashes and heights, the `headers` bucket for block headers, and the `meta` bucket for accumulator state and best chain data.
+"""
+id = "e64845c6-add9-4d32-91b5-dea5cf341365"

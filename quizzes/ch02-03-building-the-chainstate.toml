@@ -1,0 +1,26 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What is the purpose of the AssumeValidArg in the ChainState builder?"
+prompt.distractors = [
+  "Optionally assuming all blocks as valid, up to a specified height.",
+  "Optionally assuming all blocks as valid, up to a specified block.",
+  "Optionally assuming all scripts as valid, up to a specified height."
+]
+answer.answer = "Optionally assuming all scripts as valid, up to a specified block."
+context = """
+The `AssumeValidArg` allows nodes to assume the validity of scripts up to a certain block during Initial Block Download (IBD), helping to speed up the process.
+"""
+id = "732ec83a-f449-4a3b-85c1-93b72937c1df"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What happens during the initialization of the ChainState in Floresta?"
+prompt.distractors = [
+  "The genesis block header is saved as FullyValid, and its block index saved with height 1.",
+  "The genesis block header is saved as AssumeValid, and its block index saved with height 0.",
+]
+answer.answer = "The genesis block header is saved as FullyValid, and its block index saved with height 0."
+context = """
+During ChainState initialization, the genesis block header is saved as `FullyValid` with height 0, and the block index is updated accordingly.
+"""
+id = "b3bbb691-d489-4e8b-959e-24c18a7cf93b"

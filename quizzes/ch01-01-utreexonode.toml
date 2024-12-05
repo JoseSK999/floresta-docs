@@ -1,0 +1,16 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Which of the following are true about UtreexoNode in Floresta?"
+prompt.distractors = [
+  "It performs transaction validation directly.",
+  "It doesn't interface with a blockchain backend."
+]
+answer.answer = [
+  "It handles P2P connections.",
+  "It broadcasts transactions.",
+  "The Chain must implement BlockchainInterface and UpdatableChainstate."
+]
+context = """
+UtreexoNode is the highest level type in Floresta, handling P2P connections, receiving network data, and broadcasting transactions. The Chain backend must implement the BlockchainInterface and UpdatableChainstate traits.
+"""
+id = "f527ff73-bbde-43b8-8275-c2f8ddd0ab18"

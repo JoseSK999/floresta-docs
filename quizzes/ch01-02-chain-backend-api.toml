@@ -1,0 +1,106 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What is the primary purpose of the BlockchainInterface trait in Floresta?"
+prompt.distractors = [
+  "It manages network connections and broadcasting.",
+  "It handles state updates and transaction processing."
+]
+answer.answer = [
+  "It provides access to blockchain data and state of validation.",
+  "It includes methods to fetch blocks, transactions, and block heights."
+]
+context = """
+The BlockchainInterface trait is primarily focused on getting information from the blockchain and the current state of validation.
+"""
+id = "269ff072-b5a0-468f-a1a4-86cdb1ac1a84"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Which method in the BlockchainInterface trait is responsible for fetching a block by its hash?"
+prompt.distractors = [
+  "`get_block_height`",
+  "`get_best_block`"
+]
+answer.answer = "`get_block`"
+context = """
+The `get_block` method in the BlockchainInterface trait is responsible for fetching a block given its hash.
+"""
+id = "16281204-1d91-4d96-b19c-0374e9a45851"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Which two methods in the BlockchainInterface trait are responsible for validation, without updating the internal state?"
+prompt.distractors = [
+  "`connect_block`",
+  "`accept_header`",
+  "`toggle_ibd`"
+]
+answer.answer = [
+  "`update_acc`",
+  "`validate_block`"
+]
+context = """
+The `update_acc` and `validate_block` methods in the BlockchainInterface trait perform validation without updating the internal state of the node.
+"""
+id = "3a675ab8-7309-48d1-a8f4-2ce4cdd443d5"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What does the UpdatableChainstate trait do in Floresta?"
+prompt.distractors = [
+  "It provides access to the current state of the blockchain without updating the state.",
+  "It manages peer-to-peer connections and networking."
+]
+answer.answer = [
+  "It updates the internal state of the blockchain.",
+  "It validates and adds blocks to the chain."
+]
+context = """
+The UpdatableChainstate trait is responsible for updating the state of the blockchain and performing validations such as connecting new blocks.
+"""
+id = "44d73c6d-ccfd-4200-a67b-01711e404f41"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Which two methods are critical in the UpdatableChainstate trait for updating the blockchain state?"
+prompt.distractors = [
+  "`get_best_block`",
+  "`flush`"
+]
+answer.answer = [
+  "`connect_block`",
+  "`accept_header`"
+]
+context = """
+The `connect_block` and `accept_header` methods are essential for updating the blockchain state, handling blocks and headers respectively.
+"""
+id = "c0b412ae-5a5c-4437-9e9e-d1161fdcac8f"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What is the role of the `subscribe` method in the BlockchainInterface trait?"
+prompt.distractors = [
+  "It validates new blocks received by the blockchain.",
+  "It broadcasts transactions to the network."
+]
+answer.answer = "It allows components to receive notifications of new validated blocks."
+context = """
+The `subscribe` method allows other components to subscribe to the BlockchainInterface to receive notifications of newly validated blocks.
+"""
+id = "bc3c6635-34cc-4f03-8fd7-9450b6f77625"
+
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "What are the error types used in the BlockchainInterface and UpdatableChainstate traits?"
+prompt.distractors = [
+  "BlockchainInterface uses any error type bounded by `std::error::Error`.",
+  "UpdatableChainstate uses any error type bounded by `core2::error::Error`."
+]
+answer.answer = [
+  "BlockchainInterface uses any error type bounded by `core2::error::Error`.",
+  "UpdatableChainstate uses the BlockchainError type."
+]
+context = """
+The BlockchainInterface trait can use any error type as long as it implements `core2::error::Error`, while the UpdatableChainstate trait uses a specific BlockchainError type to handle errors.
+"""
+id = "832c5cb7-2bb6-4f9c-9147-90de70837c5a"

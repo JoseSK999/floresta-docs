@@ -1,0 +1,17 @@
+[[questions]]
+type = "MultipleChoice"
+prompt.prompt = "Why does ChainStateInner cache the accumulator and best chain data?"
+prompt.distractors = [
+  "To prevent unnecessary data from being written to disk.",
+  "To enhance resilience in case of disk failures or data loss."
+]
+answer.answer = [
+  "To improve performance by reducing disk reads and deserializations.",
+  "To quickly access the accumulator and validation index for verifying new blocks."
+]
+context = """
+Caching the accumulator and best chain data in `ChainStateInner` improves performance by minimizing disk reads and deserializations, allowing quicker access to data needed for validation.
+
+However, caching does not enhance resilience against disk failures or data loss, as the cached data must still be persisted.
+"""
+id = "1171eaab-417d-4f4c-b32e-de127a42617f"
