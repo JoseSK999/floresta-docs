@@ -5,6 +5,9 @@ multilingual = false
 src = "src"
 title = "Floresta Docs"
 
+[output.html]
+git-repository-url = "https://github.com/JoseSK999/floresta-docs"
+
 [output.html.playground]
 runnable = false
 
