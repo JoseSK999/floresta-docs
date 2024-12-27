@@ -43,6 +43,9 @@ fn connect_block(
         block.block_hash(),
         block.txdata.len()
     );
+    #
+    # #[cfg(feature = "metrics")]
+    # metrics::get_metrics().block_height.set(height.into());
 
     if !self.is_in_idb() || height % 10_000 == 0 {
         self.flush()?;
