@@ -8,17 +8,17 @@ Blocks fetched by `UtreexoNode` are passed to a blockchain backend for validatio
 
 *Figure 1: Diagram of the UtreexoNode type.*
 
-Below is the actual type definition, which is a tuple struct with two fields and trait bounds for the `Chain` backend.
+Below is the actual type definition, which is a struct with two fields and trait bounds for the `Chain` backend.
 
 Filename: floresta-wire/src/p2p_wire/node.rs
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub struct UtreexoNode<Context, Chain: BlockchainInterface + UpdatableChainstate>(
-    pub(crate) NodeCommon<Chain>,
-    pub(crate) Context,
-);
+pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context> {
+    pub(crate) common: NodeCommon<Chain>,
+    pub(crate) context: Context,
+}
 ```
 
 The `Chain` backend must implement two key traits:

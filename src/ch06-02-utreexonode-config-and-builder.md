@@ -11,7 +11,7 @@ Let's start with the builder function, taking a `UtreexoNodeConfig`, the `Chain`
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-impl<T, Chain> UtreexoNode<T, Chain>
+impl<T, Chain> UtreexoNode<Chain, T>
 where
     T: 'static + Default + NodeContext,
     WireError: From<<Chain as BlockchainInterface>::Error>,
@@ -34,8 +34,8 @@ where
             })
             .transpose()?;
 
-        Ok(UtreexoNode(
-            NodeCommon {
+        Ok(UtreexoNode {
+            common: NodeCommon {
                 // Initialization of many fields :P
                 # last_filter: chain.get_block_hash(0).unwrap(),
                 # block_filters,
@@ -65,8 +65,8 @@ where
                 # fixed_peer,
                 # config,
             },
-            T::default(),
-        ))
+            context: T::default(),
+        })
     }
 // ...
 ```

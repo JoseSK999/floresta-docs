@@ -56,10 +56,10 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) network: Network,
 }
 
-pub struct UtreexoNode<Context, Chain: BlockchainInterface + UpdatableChainstate>(
-    pub(crate) NodeCommon<Chain>,
-    pub(crate) Context,
-);
+pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context> {
+    pub(crate) common: NodeCommon<Chain>,
+    pub(crate) context: Context,
+}
 ```
 
 On the other hand, the `Context` generic in `UtreexoNode` will allow the node to implement additional functionality and manage data specific to a particular context. This is explained in the [next section](ch06-01-node-contexts.md).
@@ -69,7 +69,7 @@ Although the `Context` generic in the type definition is not constrained by any 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-impl<T, Chain> UtreexoNode<T, Chain>
+impl<T, Chain> UtreexoNode<Chain, T>
 where
     T: 'static + Default + NodeContext,
     WireError: From<<Chain as BlockchainInterface>::Error>,
@@ -84,26 +84,26 @@ In this implementation block, we also encounter a `WireError`, which serves as t
 
 ### How to Access Inner Fields
 
-To avoid repetitively calling `self.0.field_name` to access the many inner `NodeCommon` fields, `UtreexoNode` implements the `Deref` and `DerefMut` traits. This means that we can access the `NodeCommon` fields as if they were fields of `UtreexoNode`.
+To avoid repetitively calling `self.common.field_name` to access the many inner `NodeCommon` fields, `UtreexoNode` implements the `Deref` and `DerefMut` traits. This means that we can access the `NodeCommon` fields as if they were fields of `UtreexoNode`.
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-impl<Chain: BlockchainInterface + UpdatableChainstate, T> Deref for UtreexoNode<T, Chain> {
+impl<Chain: BlockchainInterface + UpdatableChainstate, T> Deref for UtreexoNode<Chain, T> {
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.common
     }
     type Target = NodeCommon<Chain>;
 }
 
-impl<T, Chain: BlockchainInterface + UpdatableChainstate> DerefMut for UtreexoNode<T, Chain> {
+impl<T, Chain: BlockchainInterface + UpdatableChainstate> DerefMut for UtreexoNode<Chain, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.common
     }
 }
 ```
 
-However, the `Context` generic still needs to be accessed explicitly via `self.1`.
+However, the `Context` generic still needs to be accessed explicitly via `self.context`.
 
 ## The Role of UtreexoNode
 

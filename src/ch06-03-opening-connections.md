@@ -18,7 +18,7 @@ pub(crate) async fn maybe_open_connection(&mut self) -> Result<(), WireError> {
     // if we need utreexo peers, we can bypass our max outgoing peers limit in case
     // we don't have any utreexo peers
     let bypass = self
-        .1
+        .context
         .get_required_services()
         .has(service_flags::UTREEXO.into())
         && !self.has_utreexo_peers();
@@ -94,7 +94,7 @@ pub(crate) async fn create_connection(&mut self, kind: ConnectionKind) -> Option
 
     // Don't connect to the same peer twice
     if self
-        .0
+        .common
         .peers
         .iter()
         .any(|peers| peers.1.address == address.get_net_address())
