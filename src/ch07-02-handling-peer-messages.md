@@ -17,6 +17,7 @@ pub async fn create_peer(
     # actor_receiver: UnboundedReceiver<ReaderMessage>,
     # writer: WriteHalf<TcpStream>,
     # our_user_agent: String,
+    # cancellation_sender: tokio::sync::oneshot::Sender<()>,
 ) {
     let peer = Peer {
         // Initializing the many Peer fields :P
@@ -42,6 +43,7 @@ pub async fn create_peer(
         # actor_receiver, // Add the receiver for messages from TcpStreamActor
         # writer,
         # our_user_agent,
+        # cancellation_sender,
     };
 
     spawn(peer.read_loop());
@@ -55,7 +57,9 @@ This `read_loop` method will in turn call a `peer_loop_inner` method:
 #
 pub async fn read_loop(mut self) -> Result<()> {
     let err = self.peer_loop_inner().await;
-    // Check any errors returned by the loop and shutdown the stream
+    // Check any errors returned by the loop, shutdown the stream writer
+    // and send cancellation signal to close the stream reader (actor task)
+    // ...
     # if err.is_err() {
         # error!("Peer {} connection loop closed: {err:?}", self.id);
     # }
@@ -65,6 +69,13 @@ pub async fn read_loop(mut self) -> Result<()> {
     # if let Err(shutdown_err) = self.writer.shutdown().await {
         # debug!(
             # "Failed to shutdown writer for Peer {}: {shutdown_err:?}",
+            # self.id
+        # );
+    # }
+    #
+    # if let Err(cancellation_err) = self.cancellation_sender.send(()) {
+        # debug!(
+            # "Failed to propagate cancellation signal for Peer {}: {cancellation_err:?}",
             # self.id
         # );
     # }

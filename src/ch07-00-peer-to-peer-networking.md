@@ -36,9 +36,13 @@ pub(crate) async fn open_non_proxy_connection(
     stream.set_nodelay(true)?;
     let (reader, writer) = tokio::io::split(stream);
 
+    let (cancellation_sender, cancellation_receiver) = tokio::sync::oneshot::channel();
     let (actor_receiver, actor) = create_tcp_stream_actor(reader);
     tokio::spawn(async move {
-        let _ = actor.run().await;
+        tokio::select! {
+            _ = cancellation_receiver => {}
+            _ = actor.run() => {}
+        }
     });
 
     // Use create_peer function instead of manually creating the peer
@@ -53,6 +57,7 @@ pub(crate) async fn open_non_proxy_connection(
         actor_receiver,
         writer,
         user_agent,
+        cancellation_sender,
     )
     .await;
 
@@ -60,7 +65,9 @@ pub(crate) async fn open_non_proxy_connection(
 }
 ```
 
-This actor is obtained via the `create_tcp_stream_actor` function, implemented in _p2p_wire/peer.rs_, which returns the actor receiver (to get the peer messages) and actor instance, of type `TcpStreamActor`. The actor is spawned as a separate asynchronous task, ensuring it runs independently to handle incoming data.
+This actor is obtained via the `create_tcp_stream_actor` function, implemented in _p2p_wire/peer.rs_, which returns the actor receiver (to get the peer messages) and actor instance, of type `TcpStreamActor`. **The actor is spawned as a separate asynchronous task**, ensuring it runs independently to handle incoming data.
+
+Very importantly, the actor for a peer must be closed when the connection finalizes, and this is why we have an additional one-time-use channel, used by the `Peer` type to send a cancellation signal (i.e. "_Peer connection is closed, so we don't need to listen to the peer anymore_"). The `tokio::select` macro ensures that the async actor task is dropped whenever a cancellation signal is received from `Peer`.
 
 Finally, the `Peer` instance is created using the `Peer::create_peer` function. The communication channels (internal and over the P2P network) that the `Peer` uses are:
 
@@ -68,8 +75,11 @@ Finally, the `Peer` instance is created using the `Peer::create_peer` function. 
 - The requests receiver (`requests_rx`): to receive requests from `UtreexoNode` that will be sent to the peer.
 - The `actor_receiver`: to receive peer messages.
 - The TCP stream `writer`: to send messages to the peer.
+- The `cancellation_sender`: to close the TCP reader actor.
 
 By the end of this function, a fully initialized `Peer` is ready to manage communication with the connected peer via TCP (writing side) and via `TcpStreamActor` (reading side), as well as communicating with `UtreexoNode`.
+
+### Proxy Connection
 
 The `open_proxy_connection` is pretty much the same, except we get the TCP stream writer and reader from the proxy connection instead. The proxy setup is handled by the `Socks5StreamBuilder::connect` method, implemented in _p2p_wire/socks_.
 
@@ -107,9 +117,14 @@ pub(crate) async fn open_proxy_connection(
     let stream = Socks5StreamBuilder::connect(proxy, addr, address.get_port()).await?;
 
     let (reader, writer) = tokio::io::split(stream);
+
+    let (cancellation_sender, cancellation_receiver) = tokio::sync::oneshot::channel();
     let (actor_receiver, actor) = create_tcp_stream_actor(reader);
     tokio::spawn(async move {
-        let _ = actor.run().await;
+        tokio::select! {
+            _ = cancellation_receiver => {}
+            _ = actor.run() => {}
+        }
     });
 
     Peer::<WriteHalf>::create_peer(
@@ -124,6 +139,7 @@ pub(crate) async fn open_proxy_connection(
         # actor_receiver,
         # writer,
         # user_agent,
+        # cancellation_sender,
     )
     .await;
     Ok(())
@@ -146,6 +162,10 @@ Let's do a brief recap of the channels we have opened for internal node message 
   - `TcpStreamActor` sends via `actor_sender`
   - `Peer` receives via `actor_receiver`
 
-`UtreexoNode` sends requests via the **Request Channel** to the `Peer` component (which then forwards them to the peer via TCP), `Peer` receives the result or other peer messages via the **Actor Channel**, and then it notifies `UtreexoNode` via the **Node Channel**.
+- **Cancellation Signal Channel** (`Peer` -> `UtreexoNode`)
+  - `Peer` sends the signal via `cancellation_sender` at the end of the connection
+  - `UtreexoNode` receives it via `cancellation_receiver`
+
+`UtreexoNode` sends requests via the **Request Channel** to the `Peer` component (which then forwards them to the peer via TCP), `Peer` receives the result or other peer messages via the **Actor Channel**, and then it notifies `UtreexoNode` via the **Node Channel**. When the peer connection is closed, `Peer` uses the **Cancellation Signal Channel** to allow the TCP actor listening to the peer to be closed as well.
 
 Next, we'll explore how messages are read and sent in the P2P network!
