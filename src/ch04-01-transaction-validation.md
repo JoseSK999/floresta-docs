@@ -131,63 +131,76 @@ pub fn verify_block_transactions(
     verify_script: bool,
     flags: c_uint,
 ) -> Result<(), BlockchainError> {
-    // Blocks must contain at least one transaction
+    // Blocks must contain at least one transaction (i.e. the coinbase)
     if transactions.is_empty() {
         return Err(BlockValidationErrors::EmptyBlock.into());
     }
     let mut fee = 0;
     let mut wu: u64 = 0;
-    // Skip the coinbase tx
+
     for (n, transaction) in transactions.iter().enumerate() {
-        // We don't need to verify the coinbase inputs, as it spends newly generated coins
-        if transaction.is_coinbase() && n == 0 {
-            Self::verify_coinbase(transaction.clone(), n as u16).map_err(|err| {
+        if n == 0 {
+            if transaction.is_coinbase() {
+                Self::verify_coinbase(transaction).map_err(|error| TransactionError {
+                    txid: transaction.compute_txid(),
+                    error,
+                })?;
+                // Skip the rest of checks for the coinbase transaction
+                continue;
+            } else {
+                // First tx not coinbase
+                return Err(BlockValidationErrors::FirstTxIsnNotCoinbase.into());
+            }
+        }
+
+        // Sum tx output amounts, check their locking script sizes (scriptpubkey)
+        let mut out_value = 0;
+        for output in transaction.output.iter() {
+            out_value += output.value.to_sat();
+
+            Self::validate_script_size(&output.script_pubkey).map_err(|error| {
                 TransactionError {
                     txid: transaction.compute_txid(),
-                    error: err,
+                    error,
                 }
-            });
-            continue;
+            })?;
         }
-        // Amount of all outputs
-        let mut output_value = 0;
-        for output in transaction.output.iter() {
-            Self::get_out_value(output, &mut output_value).map_err(|err| TransactionError {
-                txid: transaction.compute_txid(),
-                error: err,
-            });
-            Self::validate_script_size(&output.script_pubkey).map_err(|err| TransactionError {
-                txid: transaction.compute_txid(),
-                error: err,
-            });
-        }
-        // Amount of all inputs
+
+        // Sum tx input amounts, check their unlocking script sizes (scriptsig and TODO witness)
         let mut in_value = 0;
         for input in transaction.input.iter() {
-            Self::consume_utxos(input, &mut utxos, &mut in_value).map_err(|err| {
+            let txo = Self::get_utxo(input, &utxos).map_err(|error| TransactionError {
+                txid: transaction.compute_txid(),
+                error,
+            })?;
+
+            in_value += txo.value.to_sat();
+
+            Self::validate_script_size(&input.script_sig).map_err(|error| {
                 TransactionError {
                     txid: transaction.compute_txid(),
-                    error: err,
+                    error,
                 }
-            });
-            Self::validate_script_size(&input.script_sig).map_err(|err| TransactionError {
-                txid: transaction.compute_txid(),
-                error: err,
-            });
+            })?;
+            // TODO check also witness script size
         }
+
         // Value in should be greater or equal to value out. Otherwise, inflation.
-        if output_value > in_value {
+        if out_value > in_value {
             return Err(TransactionError {
                 txid: transaction.compute_txid(),
                 error: BlockValidationErrors::NotEnoughMoney,
             }
             .into());
         }
-        if output_value > 21_000_000 * 100_000_000 {
+        // Sanity check
+        if out_value > 21_000_000 * COIN_VALUE {
             return Err(BlockValidationErrors::TooManyCoins.into());
         }
+
         // Fee is the difference between inputs and outputs
-        fee += in_value - output_value;
+        fee += in_value - out_value;
+
         // Verify the tx script
         #[cfg(feature = "bitcoinconsensus")]
         if verify_script {
@@ -196,17 +209,18 @@ pub fn verify_block_transactions(
                 .map_err(|err| TransactionError {
                     txid: transaction.compute_txid(),
                     error: BlockValidationErrors::ScriptValidationError(err.to_string()),
-                });
+                })?;
         };
 
-        //checks vbytes validation
-        //After all the checks, we sum the transaction weight to the block weight
+        // Sum the transaction weights to get the total block weight
         wu += transaction.weight().to_wu();
     }
-    //checks if the block weight is fine.
+
+    // Checks if the block weight is fine
     if wu > 4_000_000 {
         return Err(BlockValidationErrors::BlockTooBig.into());
     }
+
     // Checks if the miner isn't trying to create inflation
     if fee + subsidy
         < transactions[0]
@@ -216,6 +230,7 @@ pub fn verify_block_transactions(
     {
         return Err(BlockValidationErrors::BadCoinbaseOutValue.into());
     }
+
     Ok(())
 }
 ```
