@@ -12,23 +12,21 @@ pub fn validate_block_no_acc(
     inputs: HashMap<OutPoint, TxOut>,
 ) -> Result<(), BlockchainError> {
     # if !block.check_merkle_root() {
-        # return Err(BlockchainError::BlockValidation(
-            # BlockValidationErrors::BadMerkleRoot,
-        # ));
+        # return Err(BlockValidationErrors::BadMerkleRoot.into());
     # }
     #
-    # if height >= self.chain_params().params.bip34_height
-        # && self.get_bip34_height(block) != Some(height)
-    # {
-        # return Err(BlockchainError::BlockValidation(
-            # BlockValidationErrors::BadBip34,
-        # ));
+    # let bip34_height = self.chain_params().params.bip34_height;
+    # // If bip34 is active, check that the encoded block height is correct
+    # if height >= bip34_height && self.get_bip34_height(block) != Some(height) {
+        # return Err(BlockValidationErrors::BadBip34.into());
     # }
     #
     # if !block.check_witness_commitment() {
-        # return Err(BlockchainError::BlockValidation(
-            # BlockValidationErrors::BadWitnessCommitment,
-        # ));
+        # return Err(BlockValidationErrors::BadWitnessCommitment.into());
+    # }
+    #
+    # if block.weight().to_wu() > 4_000_000 {
+        # return Err(BlockValidationErrors::BlockTooBig.into());
     # }
     #
     # // Validate block transactions
@@ -135,22 +133,22 @@ pub fn verify_block_transactions(
     if transactions.is_empty() {
         return Err(BlockValidationErrors::EmptyBlock.into());
     }
+
+    // Total block fees that the miner can claim in the coinbase
     let mut fee = 0;
-    let mut wu: u64 = 0;
 
     for (n, transaction) in transactions.iter().enumerate() {
         if n == 0 {
-            if transaction.is_coinbase() {
-                Self::verify_coinbase(transaction).map_err(|error| TransactionError {
-                    txid: transaction.compute_txid(),
-                    error,
-                })?;
-                // Skip the rest of checks for the coinbase transaction
-                continue;
-            } else {
-                // First tx not coinbase
-                return Err(BlockValidationErrors::FirstTxIsnNotCoinbase.into());
+            if !transaction.is_coinbase() {
+                return Err(BlockValidationErrors::FirstTxIsNotCoinbase.into());
             }
+
+            Self::verify_coinbase(transaction).map_err(|error| TransactionError {
+                txid: transaction.compute_txid(),
+                error,
+            })?;
+            // Skip the rest of checks for the coinbase transaction
+            continue;
         }
 
         // Sum tx output amounts, check their locking script sizes (scriptpubkey)
@@ -211,14 +209,6 @@ pub fn verify_block_transactions(
                     error: BlockValidationErrors::ScriptValidationError(err.to_string()),
                 })?;
         };
-
-        // Sum the transaction weights to get the total block weight
-        wu += transaction.weight().to_wu();
-    }
-
-    // Checks if the block weight is fine
-    if wu > 4_000_000 {
-        return Err(BlockValidationErrors::BlockTooBig.into());
     }
 
     // Checks if the miner isn't trying to create inflation

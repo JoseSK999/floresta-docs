@@ -18,23 +18,21 @@ pub fn validate_block_no_acc(
     inputs: HashMap<OutPoint, TxOut>,
 ) -> Result<(), BlockchainError> {
     if !block.check_merkle_root() {
-        return Err(BlockchainError::BlockValidation(
-            BlockValidationErrors::BadMerkleRoot,
-        ));
+        return Err(BlockValidationErrors::BadMerkleRoot.into());
     }
 
-    if height >= self.chain_params().params.bip34_height
-        && self.get_bip34_height(block) != Some(height)
-    {
-        return Err(BlockchainError::BlockValidation(
-            BlockValidationErrors::BadBip34,
-        ));
+    let bip34_height = self.chain_params().params.bip34_height;
+    // If bip34 is active, check that the encoded block height is correct
+    if height >= bip34_height && self.get_bip34_height(block) != Some(height) {
+        return Err(BlockValidationErrors::BadBip34.into());
     }
 
     if !block.check_witness_commitment() {
-        return Err(BlockchainError::BlockValidation(
-            BlockValidationErrors::BadWitnessCommitment,
-        ));
+        return Err(BlockValidationErrors::BadWitnessCommitment.into());
+    }
+
+    if block.weight().to_wu() > 4_000_000 {
+        return Err(BlockValidationErrors::BlockTooBig.into());
     }
 
     // Validate block transactions
@@ -61,6 +59,7 @@ In order, we do the following things:
 1. Call `check_merkle_root` on the `block`, to check that the merkle root commits to all the transactions.
 2. Check that, if the height is greater or equal than that of the activation of [BIP 34](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki), the coinbase transaction encodes the height as specified.
 3. Call `check_witness_commitment`, to check that the `wtxid` merkle root is included in the coinbase transaction as per [BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki).
+4. Finally, check that the block weight doesn't exceed the 4,000,000 weight unit limit.
 
 Lastly we go on to validate the transactions. We retrieve the current subsidy (the newly generated coins) with the `get_subsidy` method on our `Consensus` struct. We also call the `verify_script` method which returns a boolean flag indicating if we are NOT inside the `Assume-Valid` range.
 
