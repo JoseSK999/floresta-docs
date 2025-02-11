@@ -68,7 +68,7 @@ impl ChainParams {
                     # "972ea2c7472c22e4eab49e9c2db5757a048b271b6251883ce89ccfeaa38b47ab",
                 ]
                 .into_iter()
-                .map(|x| NodeHash::from_str(x).unwrap())
+                .map(|x| BitcoinNodeHash::from_str(x).unwrap())
                 .collect(),
                 leaves: 2587882501,
             },

@@ -30,7 +30,7 @@ pub trait UpdatableChainstate {
     #
     # fn mark_block_as_valid(&self, block: BlockHash) -> Result<(), BlockchainError>;
     #
-    # fn get_root_hashes(&self) -> Vec<NodeHash>;
+    # fn get_root_hashes(&self) -> Vec<BitcoinNodeHash>;
     #
     // ...
     fn get_partial_chain(

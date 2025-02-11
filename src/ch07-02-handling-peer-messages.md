@@ -8,7 +8,7 @@ As we can see below, the only thing the `Peer::create_peer` method does is initi
 pub async fn create_peer(
     // ...
     # id: u32,
-    # mempool: Arc<RwLock<Mempool>>,
+    # mempool: Arc<Mutex<Mempool>>,
     # network: Network,
     # node_tx: UnboundedSender<NodeNotification>,
     # node_requests: UnboundedReceiver<NodeRequest>,
