@@ -37,6 +37,7 @@ where
         Ok(UtreexoNode {
             common: NodeCommon {
                 // Initialization of many fields :P
+                # block_sync_avg: FractionAvg::new(0, 0),
                 # last_filter: chain.get_block_hash(0).unwrap(),
                 # block_filters,
                 # inflight: HashMap::new(),
