@@ -144,9 +144,9 @@ pub fn verify_block_transactions(
             if !transaction.is_coinbase() {
                 return Err(BlockValidationErrors::FirstTxIsNotCoinbase)?;
             }
+            // Check coinbase input and output script limits
             Self::verify_coinbase(transaction)?;
-
-            // Skip the rest of checks for the coinbase transaction
+            // Skip next checks: coinbase input is exempt, coinbase reward checked later
             continue;
         }
 
@@ -190,13 +190,15 @@ pub fn verify_block_transactions(
         };
     }
 
-    // Checks if the miner isn't trying to create inflation
-    if fee + subsidy
-        < transactions[0]
-            .output
-            .iter()
-            .fold(0, |acc, out| acc + out.value.to_sat())
-    {
+    // Check coinbase output values to ensure the miner isn't producing excess coins
+    let allowed_reward = fee + subsidy;
+    let coinbase_total: u64 = transactions[0]
+        .output
+        .iter()
+        .map(|out| out.value.to_sat())
+        .sum();
+
+    if coinbase_total > allowed_reward {
         return Err(BlockValidationErrors::BadCoinbaseOutValue)?;
     }
 
