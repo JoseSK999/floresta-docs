@@ -11,7 +11,7 @@ However, we have yet to **verify that these `utxos` actually exist in the UTXO s
 *Figure 4: A visual depiction of the utreexo forest. To prove that UTXO `4` is part of the set we provide the hash of UTXO `3` and `h1`. With this data we can re-compute the `h5` root, which must be identical. Credit: [original utreexo post](https://medium.com/interdax/utreexo-compressing-fully-validating-bitcoin-nodes-4174d95e0626).*
 
 In the function we get the new leaf hashes (the hashes of newly created UTXOs in the block) by calling `udata::proof_util::get_block_adds`. This function returns the new leaves to add to the accumulator, which exclude two cases:
-1. Created UTXOs that are provably unspendable (e.g. an OP_RETURN output).
+1. Created UTXOs that are provably unspendable (e.g. an OP_RETURN output or any output with a script larger than 10,000 bytes).
 2. Created UTXOs spent within the same block.
 
 Finally, we get the updated `Stump` using its `modify` method, provided the leaves to add, the leaves to remove and the proof of inclusion for the latter. This method both verifies the proof and generates the new accumulator.
@@ -29,10 +29,8 @@ pub fn update_acc(
     del_hashes: Vec<sha256::Hash>,
 ) -> Result<Stump, BlockchainError> {
     let block_hash = block.block_hash();
-    let del_hashes = del_hashes
-        .iter()
-        .map(|hash| BitcoinNodeHash::from(hash.as_byte_array()))
-        .collect::<Vec<_>>();
+    // Convert to BitcoinNodeHashes, from rustreexo
+    let del_hashes: Vec<_> = del_hashes.into_iter().map(Into::into).collect();
 
     let adds = udata::proof_util::get_block_adds(block, height, block_hash);
 

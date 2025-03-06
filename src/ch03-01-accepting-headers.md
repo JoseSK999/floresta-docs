@@ -118,7 +118,7 @@ fn validate_header(&self, block_header: &BlockHeader) -> Result<BlockHash, Block
     # let prev_block = self.get_disk_block_header(&block_header.prev_blockhash)?;
     # let prev_block_height = prev_block.height();
     # if prev_block_height.is_none() {
-        # return Err(BlockValidationErrors::BlockExtendsAnOrphanChain.into());
+        # return Err(BlockValidationErrors::BlockExtendsAnOrphanChain)?;
     # }
     # let height = prev_block_height.unwrap() + 1;
     // ...
@@ -128,12 +128,12 @@ fn validate_header(&self, block_header: &BlockHeader) -> Result<BlockHash, Block
 
     let actual_target = block_header.target();
     if actual_target > expected_target {
-        return Err(BlockValidationErrors::NotEnoughPow.into());
+        return Err(BlockValidationErrors::NotEnoughPow)?;
     }
 
     let block_hash = block_header
         .validate_pow(actual_target)
-        .map_err(|_| BlockchainError::BlockValidation(BlockValidationErrors::NotEnoughPow))?;
+        .map_err(|_| BlockValidationErrors::NotEnoughPow)?;
     Ok(block_hash)
 }
 ```

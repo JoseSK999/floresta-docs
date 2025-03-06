@@ -18,21 +18,21 @@ pub fn validate_block_no_acc(
     inputs: HashMap<OutPoint, TxOut>,
 ) -> Result<(), BlockchainError> {
     if !block.check_merkle_root() {
-        return Err(BlockValidationErrors::BadMerkleRoot.into());
+        return Err(BlockValidationErrors::BadMerkleRoot)?;
     }
 
     let bip34_height = self.chain_params().params.bip34_height;
     // If bip34 is active, check that the encoded block height is correct
     if height >= bip34_height && self.get_bip34_height(block) != Some(height) {
-        return Err(BlockValidationErrors::BadBip34.into());
+        return Err(BlockValidationErrors::BadBip34)?;
     }
 
     if !block.check_witness_commitment() {
-        return Err(BlockValidationErrors::BadWitnessCommitment.into());
+        return Err(BlockValidationErrors::BadWitnessCommitment)?;
     }
 
     if block.weight().to_wu() > 4_000_000 {
-        return Err(BlockValidationErrors::BlockTooBig.into());
+        return Err(BlockValidationErrors::BlockTooBig)?;
     }
 
     // Validate block transactions
