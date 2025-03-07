@@ -102,7 +102,7 @@ The flags cover the following consensus rules added to Bitcoin over time:
 
 ### Verify Block Transactions
 
-Now, the `Consensus::verify_block_transactions` function has this body:
+Now, the `Consensus::verify_block_transactions` function has this body, which in turn calls `Consensus::verify_transaction`:
 
 Filename: pruned_utreexo/consensus.rs
 
@@ -121,6 +121,7 @@ Filename: pruned_utreexo/consensus.rs
 ///     - The transaction must not have duplicate inputs
 ///     - The transaction must not spend more coins than it claims in the inputs
 ///     - The transaction must have valid scripts
+#[allow(unused)]
 pub fn verify_block_transactions(
     height: u32,
     mut utxos: HashMap<OutPoint, TxOut>,
@@ -138,8 +139,6 @@ pub fn verify_block_transactions(
     let mut fee = 0;
 
     for (n, transaction) in transactions.iter().enumerate() {
-        let txid = || transaction.compute_txid();
-
         if n == 0 {
             if !transaction.is_coinbase() {
                 return Err(BlockValidationErrors::FirstTxIsNotCoinbase)?;
@@ -150,43 +149,12 @@ pub fn verify_block_transactions(
             continue;
         }
 
-        // Sum tx output amounts. This will be used for the fee calculation
-        let out_value: u64 = transaction
-            .output
-            .iter()
-            .map(|out| out.value.to_sat())
-            .sum();
-
-        // Sum tx input amounts, check their unlocking script sizes (scriptsig and TODO witness)
-        let mut in_value = 0;
-        for input in transaction.input.iter() {
-            let txo = Self::get_utxo(input, &utxos, txid)?;
-
-            in_value += txo.value.to_sat();
-
-            Self::validate_script_size(&input.script_sig, txid)?;
-            // TODO check also witness script size
-        }
-
-        // Value in should be greater or equal to value out. Otherwise, inflation.
-        if out_value > in_value {
-            return Err(tx_err!(txid, NotEnoughMoney))?;
-        }
-        // Sanity check
-        if out_value > 21_000_000 * COIN_VALUE {
-            return Err(BlockValidationErrors::TooManyCoins)?;
-        }
+        // Actually verify the transaction
+        let (in_value, out_value) =
+            Self::verify_transaction(transaction, &mut utxos, verify_script, flags)?;
 
         // Fee is the difference between inputs and outputs
         fee += in_value - out_value;
-
-        // Verify the tx script
-        #[cfg(feature = "bitcoinconsensus")]
-        if verify_script {
-            transaction
-                .verify_with_flags(|outpoint| utxos.remove(outpoint), flags)
-                .map_err(|e| tx_err!(txid, ScriptValidationError, e.to_string()))?;
-        };
     }
 
     // Check coinbase output values to ensure the miner isn't producing excess coins
@@ -202,6 +170,58 @@ pub fn verify_block_transactions(
     }
 
     Ok(())
+}
+
+/// Verifies a single transaction. This function checks the following:
+///     - The transaction doesn't spend more coins than it claims in the inputs
+///     - The transaction doesn't create more coins than allowed
+///     - The transaction has valid scripts
+///     - The transaction doesn't have duplicate inputs (implicitly checked by the hashmap)
+fn verify_transaction(
+    transaction: &Transaction,
+    utxos: &mut HashMap<OutPoint, TxOut>,
+    _verify_script: bool,
+    _flags: c_uint,
+) -> Result<(u64, u64), BlockchainError> {
+    let txid = || transaction.compute_txid();
+
+    let out_value: u64 = transaction
+        .output
+        .iter()
+        .map(|out| out.value.to_sat())
+        .sum();
+
+    // Sum tx input amounts, check their unlocking script sizes (scriptsig and TODO witness)
+    let mut in_value = 0;
+    for input in transaction.input.iter() {
+        let txo = Self::get_utxo(input, utxos, txid)?;
+
+        in_value += txo.value.to_sat();
+
+        Self::validate_script_size(&input.script_sig, txid)?;
+        Self::validate_script_size(&txo.script_pubkey, || input.previous_output.txid)?;
+        // TODO check also witness script size
+    }
+
+    // Value in should be greater or equal to value out. Otherwise, inflation.
+    if out_value > in_value {
+        return Err(tx_err!(txid, NotEnoughMoney))?;
+    }
+
+    // Sanity check
+    if out_value > 21_000_000 * COIN_VALUE {
+        return Err(BlockValidationErrors::TooManyCoins)?;
+    }
+
+    // Verify the tx script
+    #[cfg(feature = "bitcoinconsensus")]
+    if _verify_script {
+        transaction
+            .verify_with_flags(|outpoint| utxos.remove(outpoint), _flags)
+            .map_err(|e| tx_err!(txid, ScriptValidationError, e.to_string()))?;
+    };
+
+    Ok((in_value, out_value))
 }
 ```
 
