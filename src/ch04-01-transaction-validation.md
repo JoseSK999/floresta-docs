@@ -191,15 +191,15 @@ fn verify_transaction(
         .map(|out| out.value.to_sat())
         .sum();
 
-    // Sum tx input amounts, check their unlocking script sizes (scriptsig and TODO witness)
     let mut in_value = 0;
     for input in transaction.input.iter() {
         let txo = Self::get_utxo(input, utxos, txid)?;
 
         in_value += txo.value.to_sat();
 
-        Self::validate_script_size(&input.script_sig, txid)?;
+        // Check script sizes (spent txo pubkey, and current tx scriptsig and TODO witness)
         Self::validate_script_size(&txo.script_pubkey, || input.previous_output.txid)?;
+        Self::validate_script_size(&input.script_sig, txid)?;
         // TODO check also witness script size
     }
 
@@ -207,7 +207,6 @@ fn verify_transaction(
     if out_value > in_value {
         return Err(tx_err!(txid, NotEnoughMoney))?;
     }
-
     // Sanity check
     if out_value > 21_000_000 * COIN_VALUE {
         return Err(BlockValidationErrors::TooManyCoins)?;

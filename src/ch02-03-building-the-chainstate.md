@@ -135,9 +135,6 @@ Filename: pruned_utreexo/chainparams.rs
 // Omitted: impl ChainParams {
 
 pub fn get_assume_valid(network: Network, arg: AssumeValidArg) -> Option<BlockHash> {
-    fn get_hash(hash: &str) -> BlockHash {
-        BlockHash::from_str(hash).expect("hardcoded hash should not fail")
-    }
     match arg {
         // No assume-valid hash
         AssumeValidArg::Disabled => None,
@@ -145,22 +142,18 @@ pub fn get_assume_valid(network: Network, arg: AssumeValidArg) -> Option<BlockHa
         AssumeValidArg::UserInput(hash) => Some(hash),
         // Fetch the hardcoded values, depending on the network
         AssumeValidArg::Hardcoded => match network {
-            Network::Bitcoin => {
-                get_hash("00000000000000000000569f4d863c27e667cbee8acc8da195e7e5551658e6e9")
-                    .into()
-            }
-            Network::Testnet => {
-                get_hash("000000000000001142ad197bff16a1393290fca09e4ca904dd89e7ae98a90fcd")
-                    .into()
-            }
-            Network::Signet => {
-                get_hash("0000003ed17b9c93954daab00d73ccbd0092074c4ebfc751c7458d58b827dfea")
-                    .into()
-            }
-            Network::Regtest => {
-                get_hash("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")
-                    .into()
-            }
+            Network::Bitcoin => Some(bhash!(
+                "00000000000000000000569f4d863c27e667cbee8acc8da195e7e5551658e6e9"
+            )),
+            Network::Testnet => Some(bhash!(
+                "000000000000001142ad197bff16a1393290fca09e4ca904dd89e7ae98a90fcd"
+            )),
+            Network::Signet => Some(bhash!(
+                "0000003ed17b9c93954daab00d73ccbd0092074c4ebfc751c7458d58b827dfea"
+            )),
+            Network::Regtest => Some(bhash!(
+                "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+            )),
         },
     }
 }
