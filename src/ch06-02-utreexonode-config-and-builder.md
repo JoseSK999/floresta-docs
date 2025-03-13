@@ -57,6 +57,7 @@ where
                 # last_connection: Instant::now(),
                 # last_peer_db_dump: Instant::now(),
                 # last_broadcast: Instant::now(),
+                # last_feeler: Instant::now(),
                 # blocks: HashMap::new(),
                 # last_get_address_request: Instant::now(),
                 # last_send_addresses: Instant::now(),
@@ -163,6 +164,9 @@ pub struct UtreexoNodeConfig {
     # pub filter_start_height: Option<i32>,
     # /// The user agent that we will advertise to our peers. Defaults to `floresta:<version>`.
     # pub user_agent: String,
+    # /// Whether to allow fallback to v1 transport if v2 connection fails.
+    # /// Defaults to true.
+    # pub allow_v1_fallback: bool,
 # }
 #
 # impl Default for UtreexoNodeConfig {
@@ -181,6 +185,7 @@ pub struct UtreexoNodeConfig {
             # assume_utreexo: None,
             # filter_start_height: None,
             # user_agent: format!("floresta:{}", env!("CARGO_PKG_VERSION")),
+            # allow_v1_fallback: true,
         # }
     # }
 # }
@@ -245,6 +250,9 @@ Additional configurations include `datadir` for specifying the node's data direc
     pub filter_start_height: Option<i32>,
     /// The user agent that we will advertise to our peers. Defaults to `floresta:<version>`.
     pub user_agent: String,
+    /// Whether to allow fallback to v1 transport if v2 connection fails.
+    /// Defaults to true.
+    pub allow_v1_fallback: bool,
 }
 #
 # impl Default for UtreexoNodeConfig {
@@ -263,6 +271,7 @@ Additional configurations include `datadir` for specifying the node's data direc
             # assume_utreexo: None,
             # filter_start_height: None,
             # user_agent: format!("floresta:{}", env!("CARGO_PKG_VERSION")),
+            # allow_v1_fallback: true,
         # }
     # }
 # }
@@ -270,6 +279,8 @@ Additional configurations include `datadir` for specifying the node's data direc
 
 If one of `pow_fraud_proofs` or `assume_utreexo` is set, the `backfill` option enables background and full validation of the chain, which is recommended for security since the node skipped the IBD.
 
-For block filters, `filter_start_height` helps optimize downloads by starting from a specific height rather than the chain’s beginning. Lastly, `user_agent` allows nodes to customize their identifier when advertising to peers.
+For block filters, `filter_start_height` helps optimize downloads by starting from a specific height rather than the chain’s beginning. In relation to networking, `user_agent` allows nodes to customize their identifier when advertising to peers.
+
+Lastly, `allow_v1_fallback` is used for specifying if our node should use the version 1 P2P transport protocol as a fallback if we encounter a problem when connecting via the [version 2 transport](https://github.com/bitcoin/bips/blob/master/bip-0324.mediawiki).
 
 This flexible configuration ensures adaptability for various use cases and security levels, from development to production.

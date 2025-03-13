@@ -76,7 +76,7 @@ Let's finally inspect the `get_address_to_connect` method on the `AddressMan`, w
 This method selects a peer address for a new connection based on required services and whether the connection is a feeler. First of all, we will return `None` if the address manager doesn't have any peers. Otherwise:
 
 - For feeler connections, it randomly picks an address, or returns `None` if the peer is `Banned`.
-- For regular connections, it prioritizes peers supporting the required services or falls back to a random address. Peers that are `Banned` or already `Connected` are excluded, while those in the `NeverTried`, `Tried`, or `Failed` states are considered valid. If no suitable address is found, it returns `None`.
+- For regular connections, it prioritizes peers supporting the required services or falls back to a random address. Peers that are `Connected` are excluded. `Banned` and `Failed` ones are only accepted if enough time has passed. And those in the `NeverTried` and `Tried` states are considered valid. If no suitable address is found, it returns `None`.
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/address_man.rs
@@ -105,16 +105,38 @@ pub fn get_address_to_connect(
         return Some((*peer, address));
     };
 
-    let (id, peer) = self
-        .get_address_by_service(required_service)
-        .or_else(|| self.get_random_address(required_service))?;
+    for _ in 0..10 {
+        let (id, peer) = self
+            .get_address_by_service(required_service)
+            .or_else(|| self.get_random_address(required_service))?;
 
-    match peer.state {
-        AddressState::Banned(_) | AddressState::Connected => None,
-        AddressState::NeverTried | AddressState::Tried(_) | AddressState::Failed(_) => {
-            Some((id, peer))
+        match peer.state {
+            AddressState::NeverTried | AddressState::Tried(_) => {
+                return Some((id, peer));
+            }
+
+            AddressState::Banned(when) | AddressState::Failed(when) => {
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+
+                if when + RETRY_TIME < now {
+                    return Some((id, peer));
+                }
+
+                if let Some(peers) = self.good_peers_by_service.get_mut(&required_service) {
+                    peers.retain(|&x| x != id)
+                }
+
+                self.good_addresses.retain(|&x| x != id);
+            }
+
+            AddressState::Connected => {}
         }
     }
+
+    None
 }
 ```
 

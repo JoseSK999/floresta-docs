@@ -5,17 +5,16 @@ As we can see below, the only thing the `Peer::create_peer` method does is initi
 ```rust
 # // Path: floresta-wire/src/p2p_wire/peer.rs
 #
-pub async fn create_peer(
+pub async fn create_peer<W: AsyncWrite + Unpin + Send + Sync + 'static>(
     // ...
     # id: u32,
     # mempool: Arc<Mutex<Mempool>>,
-    # network: Network,
     # node_tx: UnboundedSender<NodeNotification>,
     # node_requests: UnboundedReceiver<NodeRequest>,
     # address_id: usize,
     # kind: ConnectionKind,
     # actor_receiver: UnboundedReceiver<ReaderMessage>,
-    # writer: WriteHalf<TcpStream>,
+    # writer: WriteTransport<W>,
     # our_user_agent: String,
     # cancellation_sender: tokio::sync::oneshot::Sender<()>,
 ) {
@@ -28,7 +27,6 @@ pub async fn create_peer(
         # mempool,
         # last_ping: None,
         # last_message: Instant::now(),
-        # network,
         # node_tx,
         # services: ServiceFlags::NONE,
         # messages: 0,
@@ -61,7 +59,7 @@ pub async fn read_loop(mut self) -> Result<()> {
     // and send cancellation signal to close the stream reader (actor task)
     // ...
     # if err.is_err() {
-        # error!("Peer {} connection loop closed: {err:?}", self.id);
+        # debug!("Peer {} connection loop closed: {err:?}", self.id);
     # }
     # self.send_to_node(PeerMessages::Disconnected(self.address_id))
         # .await;
@@ -415,6 +413,6 @@ Once connected to a peer, `UtreexoNode` can send requests and receive responses.
 
 1. It interacts with a specific peer through `NodeCommon.peers` and uses `LocalPeerView.channel` to send requests.
 
-2. `Peer` receives the request message and handles it via `handle_node_request` (that we saw in the second step). This method will perform the TCP write operation.
+2. `Peer` receives the request message and handles it via `handle_node_request` (that we saw in the second step). This method will perform the write operation.
 
-3. When the peer responds with a message, it is received via the TCP `actor_receiver` and handled by the `handle_peer_message` method, which likely passes new data back to `UtreexoNode`, continuing the communication loop.
+3. When the peer responds with a message, it is received via the message `actor_receiver` and handled by the `handle_peer_message` method, which likely passes new data back to `UtreexoNode`, continuing the communication loop.

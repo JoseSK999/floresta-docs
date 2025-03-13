@@ -9,22 +9,19 @@ The `maybe_open_connection` method determines whether the node should establish 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub(crate) async fn maybe_open_connection(&mut self) -> Result<(), WireError> {
+pub(crate) async fn maybe_open_connection(
+    &mut self,
+    required_service: ServiceFlags,
+) -> Result<(), WireError> {
     // If the user passes in a `--connect` cli argument, we only connect with
     // that particular peer.
     if self.fixed_peer.is_some() && !self.peers.is_empty() {
         return Ok(());
     }
-    // if we need utreexo peers, we can bypass our max outgoing peers limit in case
-    // we don't have any utreexo peers
-    let bypass = self
-        .context
-        .get_required_services()
-        .has(service_flags::UTREEXO.into())
-        && !self.has_utreexo_peers();
 
-    if self.peers.len() < T::MAX_OUTGOING_PEERS || bypass {
-        self.create_connection(ConnectionKind::Regular).await;
+    let connection_kind = ConnectionKind::Regular(required_service);
+    if self.peers.len() < T::MAX_OUTGOING_PEERS {
+        self.create_connection(connection_kind).await;
     }
 
     Ok(())
@@ -33,9 +30,7 @@ pub(crate) async fn maybe_open_connection(&mut self) -> Result<(), WireError> {
 
 If the user has specified a fixed peer via the `--connect` command-line argument (`self.fixed_peer.is_some()`) and there are already connected peers (`!self.peers.is_empty()`), the method does nothing and exits early. This is because we have already connected to the fixed peer.
 
-Also, if the node needs utreexo-related services (`UTREEXO` service flag) for its specific context, but doesn’t have any peers offering them (`!self.has_utreexo_peers()`), it sets a `bypass` flag to ignore the usual connection limit.
-
-Finally, if the number of peers is below the maximum allowed (`self.peers.len() < T::MAX_OUTGOING_PEERS`) or the `bypass` condition is true, it calls the `create_connection` method to establish a new 'regular' connection to a peer.
+Also, if the number of peers is below the maximum allowed (`self.peers.len() < T::MAX_OUTGOING_PEERS`), it calls the `create_connection` method to establish a new 'regular' connection to a peer.
 
 The `ConnectionKind` struct that `create_connection` takes as argument is explained below.
 
@@ -46,7 +41,8 @@ The `ConnectionKind` struct that `create_connection` takes as argument is explai
 #
 pub enum ConnectionKind {
     Feeler,
-    Regular,
+    // bitcoin::p2p::ServiceFlags
+    Regular(ServiceFlags),
     Extra,
 }
 ```
@@ -62,7 +58,7 @@ Extra connections extend the node’s reach by connecting to additional peers fo
 
 ### Create Connection
 
-`create_connection` gets required services via another method from `UtreexoNode`, gets a peer address (prioritizing the fixed peer if specified), and ensures the peer isn’t already connected.
+`create_connection` gets required services for the connection kind, gets a peer address (prioritizing the fixed peer if specified), and ensures the peer isn’t already connected.
 
 If no fixed peer is specified, we obtain a suitable peer address (or `LocalAddress`) for connection by calling `self.address_man.get_address_to_connect`. This method takes the required services and a boolean indicating whether a feeler connection is desired. We will explore this method in the next section.
 
@@ -70,7 +66,12 @@ If no fixed peer is specified, we obtain a suitable peer address (or `LocalAddre
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
 pub(crate) async fn create_connection(&mut self, kind: ConnectionKind) -> Option<()> {
-    let required_services = self.get_required_services();
+    let required_services = match kind {
+        ConnectionKind::Feeler => ServiceFlags::NONE,
+        ConnectionKind::Regular(services) => services,
+        ConnectionKind::Extra => ServiceFlags::NONE,
+    };
+
     let address = match &self.fixed_peer {
         Some(address) => Some((0, address.clone())),
         None => self
@@ -142,6 +143,7 @@ pub(crate) async fn open_connection(
                 # requests_rx,
                 # self.peer_id_count,
                 # self.config.user_agent.clone(),
+                # self.config.allow_v1_fallback,
             ),
         ));
     } else {
@@ -158,6 +160,7 @@ pub(crate) async fn open_connection(
                 # self.network.into(),
                 # self.node_tx.clone(),
                 # self.config.user_agent.clone(),
+                # self.config.allow_v1_fallback,
             ),
         ));
     }
