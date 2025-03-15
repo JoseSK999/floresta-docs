@@ -198,7 +198,7 @@ fn verify_transaction(
         in_value += txo.value.to_sat();
 
         // Check script sizes (spent txo pubkey, and current tx scriptsig and TODO witness)
-        Self::validate_script_size(&txo.script_pubkey, || input.previous_output.txid)?;
+        Self::validate_script_size(&txo.script_pubkey, txid)?;
         Self::validate_script_size(&input.script_sig, txid)?;
         // TODO check also witness script size
     }

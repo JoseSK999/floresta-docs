@@ -66,6 +66,9 @@ where
                 # max_banscore: config.max_banscore,
                 # fixed_peer,
                 # config,
+                # user_requests: Arc::new(NodeInterface {
+                    # requests: std::sync::Mutex::new(Vec::new()),
+                # }),
             },
             context: T::default(),
         })

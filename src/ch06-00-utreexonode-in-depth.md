@@ -56,6 +56,9 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) config: UtreexoNodeConfig,
     pub(crate) datadir: String,
     pub(crate) network: Network,
+
+    // 7. Stuff used by the node handle
+    pub(crate) user_requests: Arc<NodeInterface>,
 }
 
 pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context> {
