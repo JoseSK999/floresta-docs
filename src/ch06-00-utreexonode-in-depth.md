@@ -56,6 +56,7 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) config: UtreexoNodeConfig,
     pub(crate) datadir: String,
     pub(crate) network: Network,
+    pub(crate) kill_signal: Arc<tokio::sync::RwLock<bool>>,
 
     // 7. Stuff used by the node handle
     pub(crate) user_requests: Arc<NodeInterface>,

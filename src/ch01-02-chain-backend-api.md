@@ -5,6 +5,7 @@ We will now take a look at the API that the `Chain` backend (from `UtreexoNode`)
 The lists below are only meant to provide an initial sense of the expected chain API.
 
 ### The BlockchainInterface Trait
+
 The `BlockchainInterface` methods are mainly about _getting information_ from the current view of the blockchain and state of validation.
 
 It has an associated generic `Error` type bounded by the `core2::error::Error` trait. In other words, implementations of `BlockchainInterface` can choose their own error type as long as it implements `core2::error::Error`.
@@ -119,6 +120,7 @@ Finally, there are two validation methods that do NOT update the node state:
 - `validate_block`, which instead of only verifying the inclusion proof, validates the whole block (including its transactions, for which the spent UTXOs themselves are needed).
 
 ### The UpdatableChainstate Trait
+
 On the other hand, the methods required by `UpdatableChainstate` are expected to update the node state.
 
 These methods use the `BlockchainError` enum, found in _pruned_utreexo/error.rs_. Each variant of `BlockchainError` represents a kind of error that is expected to occur (block validation errors, invalid utreexo proofs, etc.). The `UpdatableChainstate` methods are:
@@ -165,6 +167,8 @@ pub trait UpdatableChainstate {
     # ) -> Result<PartialChainState, BlockchainError>;
     #
     # fn mark_chain_as_assumed(&self, acc: Stump, tip: BlockHash) -> Result<bool, BlockchainError>;
+    #
+    # fn get_acc(&self) -> Stump;
 }
 ```
 
@@ -180,5 +184,6 @@ pub trait UpdatableChainstate {
 - `get_root_hashes`: Returns the root hashes of our utreexo accumulator.
 - `get_partial_chain`: Returns a `PartialChainState` (a Floresta type allowing to validate parts of the chain in parallel, explained in [Chapter 5](ch05-00-advanced-chain-validation-methods.md)), given the height range and the initial utreexo state.
 - `mark_chain_as_assumed`: Given a block hash and the corresponding accumulator, assume every ancestor block is valid.
+- `get_acc`: Returns the current accumulator.
 
 {{#quiz ../quizzes/ch01-02-chain-backend-api.toml}}

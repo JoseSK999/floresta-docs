@@ -76,7 +76,7 @@ Let's finally inspect the `get_address_to_connect` method on the `AddressMan`, w
 This method selects a peer address for a new connection based on required services and whether the connection is a feeler. First of all, we will return `None` if the address manager doesn't have any peers. Otherwise:
 
 - For feeler connections, it randomly picks an address, or returns `None` if the peer is `Banned`.
-- For regular connections, it prioritizes peers supporting the required services or falls back to a random address. Peers that are `Connected` are excluded. `Banned` and `Failed` ones are only accepted if enough time has passed. And those in the `NeverTried` and `Tried` states are considered valid. If no suitable address is found, it returns `None`.
+- For regular connections, it prioritizes peers supporting the required services or falls back to a random address. Peers in the `NeverTried`, `Tried` and `Connected` states are considered valid, while `Banned` and `Failed` ones are only accepted if enough time has passed. If no suitable address is found, it returns `None`.
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/address_man.rs
@@ -111,7 +111,7 @@ pub fn get_address_to_connect(
             .or_else(|| self.get_random_address(required_service))?;
 
         match peer.state {
-            AddressState::NeverTried | AddressState::Tried(_) => {
+            AddressState::NeverTried | AddressState::Tried(_) | AddressState::Connected => {
                 return Some((id, peer));
             }
 
@@ -131,8 +131,6 @@ pub fn get_address_to_connect(
 
                 self.good_addresses.retain(|&x| x != id);
             }
-
-            AddressState::Connected => {}
         }
     }
 

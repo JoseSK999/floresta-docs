@@ -42,6 +42,8 @@ pub trait UpdatableChainstate {
     // ...
     #
     # fn mark_chain_as_assumed(&self, acc: Stump, tip: BlockHash) -> Result<bool, BlockchainError>;
+    #
+    # fn get_acc(&self) -> Stump;
 }
 ```
 
@@ -62,11 +64,6 @@ pub(crate) struct PartialChainStateInner {
     # /// and to build the accumulator. We assume this is sorted by height, and
     # /// should contain all blocks in this interval.
     pub(crate) blocks: Vec<BlockHeader>,
-    # /// The height this interval starts at. This [initial_height, final_height), so
-    # /// if we break the interval at height 100, the first interval will be [0, 100)
-    # /// and the second interval will be [100, 200). And the initial height of the
-    # /// second interval will be 99.
-    pub(crate) initial_height: u32,
     /// The height we are on right now, this is used to keep track of the progress
     /// of the sync.
     pub(crate) current_height: u32,
@@ -74,7 +71,7 @@ pub(crate) struct PartialChainStateInner {
     # /// result in an error.
     pub(crate) final_height: u32,
     /// The error that occurred during validation, if any. It is here so we can
-    /// pull that afterwords.
+    /// pull that afterward.
     pub(crate) error: Option<BlockValidationErrors>,
     /// The consensus parameters, we need this to validate the blocks.
     pub(crate) consensus: Consensus,
