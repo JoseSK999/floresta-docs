@@ -47,7 +47,7 @@ fn connect_block(
     # #[cfg(feature = "metrics")]
     # metrics::get_metrics().block_height.set(height.into());
 
-    if !self.is_in_idb() || height % 10_000 == 0 {
+    if !self.is_in_ibd() || height % 10_000 == 0 {
         self.flush()?;
     }
 

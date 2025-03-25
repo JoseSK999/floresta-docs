@@ -62,7 +62,7 @@ pub trait BlockchainInterface {
     fn subscribe(&self, tx: Arc<dyn BlockConsumer>);
     // ...
     #
-    # fn is_in_idb(&self) -> bool;
+    # fn is_in_ibd(&self) -> bool;
     #
     # fn get_unbroadcasted(&self) -> Vec<Transaction>;
     #
