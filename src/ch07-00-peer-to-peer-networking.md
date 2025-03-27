@@ -10,7 +10,7 @@ Recall that in [the `open_connection` method](ch06-03-opening-connections.md#ope
 
 The `open_non_proxy_connection` function will first retrieve the peer's network address and port from the provided `LocalAddress`. Then it will attempt to establish a TCP connection using `transport::connect` (implemented in the `transport` module, which handles both the v1 and v2 transport protocols).
 
-If successful, we get the transport reader and writer, which are of type `ReadTransport` and `WriteTransport`, defined in _p2p_wire/transport.rs_. Respectively, these two types wrap a `tokio` `ReadHalf<TcpStream>`, for receiving data, and a `WriteHalf<TcpStream>`, for sending data to the peer.
+If successful, we get the transport reader and writer, which are of type `ReadTransport` and `WriteTransport`, defined in _p2p_wire/transport.rs_. Respectively, these two types wrap a `tokio` `ReadHalf<TcpStream>`, for receiving data, and a `WriteHalf<TcpStream>`, for sending data to the peer. We also get the transport protocol enum, with two possible variants, `V1` or `V2`.
 
 It then sets up an 'actor', that is, an independent component that reads incoming messages and communicates them to the 'actor receiver'. The actor is effectively a transport reader wrapper.
 
@@ -31,7 +31,7 @@ pub(crate) async fn open_non_proxy_connection(
 ) -> Result<(), WireError> {
     let address = (address.get_net_address(), address.get_port());
 
-    let (transport_reader, transport_writer) =
+    let (transport_reader, transport_writer, transport_protocol) =
         transport::connect(address, network, allow_v1_fallback).await?;
 
     let (cancellation_sender, cancellation_receiver) = tokio::sync::oneshot::channel();
@@ -55,6 +55,7 @@ pub(crate) async fn open_non_proxy_connection(
         transport_writer,
         user_agent,
         cancellation_sender,
+        transport_protocol,
     )
     .await;
 
@@ -97,7 +98,7 @@ pub(crate) async fn open_proxy_connection(
     # user_agent: String,
     # allow_v1_fallback: bool,
 ) -> Result<(), WireError> {
-    let (transport_reader, transport_writer) =
+    let (transport_reader, transport_writer, transport_protocol) =
         transport::connect_proxy(proxy, address, network, allow_v1_fallback).await?;
 
     let (cancellation_sender, cancellation_receiver) = tokio::sync::oneshot::channel();
@@ -121,6 +122,7 @@ pub(crate) async fn open_proxy_connection(
         # transport_writer,
         # user_agent,
         # cancellation_sender,
+        # transport_protocol,
     )
     .await;
     Ok(())

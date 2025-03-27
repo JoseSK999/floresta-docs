@@ -187,6 +187,7 @@ pub(crate) async fn open_connection(
             # address_id: peer_id as u32,
             # height: 0,
             # banscore: 0,
+            # transport_protocol: TransportProtocol::V1, // Default to V1, will be updated when peer is ready.
         },
     );
 

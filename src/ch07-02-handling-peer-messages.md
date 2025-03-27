@@ -17,6 +17,7 @@ pub async fn create_peer<W: AsyncWrite + Unpin + Send + Sync + 'static>(
     # writer: WriteTransport<W>,
     # our_user_agent: String,
     # cancellation_sender: tokio::sync::oneshot::Sender<()>,
+    # transport_protocol: TransportProtocol,
 ) {
     let peer = Peer {
         // Initializing the many Peer fields :P
@@ -42,6 +43,7 @@ pub async fn create_peer<W: AsyncWrite + Unpin + Send + Sync + 'static>(
         # writer,
         # our_user_agent,
         # cancellation_sender,
+        # transport_protocol,
     };
 
     spawn(peer.read_loop());
