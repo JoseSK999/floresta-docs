@@ -41,6 +41,8 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
 
     // 5. Time and Event Tracking
     pub(crate) inflight: HashMap<InflightRequests, (u32, Instant)>,
+    pub(crate) inflight_user_requests:
+        HashMap<UserRequest, (u32, Instant, oneshot::Sender<NodeResponse>)>,
     pub(crate) last_headers_request: Instant,
     pub(crate) last_tip_update: Instant,
     pub(crate) last_connection: Instant,
@@ -57,9 +59,6 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) datadir: String,
     pub(crate) network: Network,
     pub(crate) kill_signal: Arc<tokio::sync::RwLock<bool>>,
-
-    // 7. Stuff used by the node handle
-    pub(crate) user_requests: Arc<NodeInterface>,
 }
 
 pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context> {

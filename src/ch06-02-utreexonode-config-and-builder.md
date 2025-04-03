@@ -43,6 +43,7 @@ where
                 # last_filter: chain.get_block_hash(0).unwrap(),
                 # block_filters,
                 # inflight: HashMap::new(),
+                # inflight_user_requests: HashMap::new(),
                 # peer_id_count: 0,
                 # peers: HashMap::new(),
                 # last_block_request: chain.get_validation_index().expect("Invalid chain"),
@@ -68,9 +69,6 @@ where
                 # socks5,
                 # fixed_peer,
                 # config,
-                # user_requests: Arc::new(NodeInterface {
-                    # requests: std::sync::Mutex::new(Vec::new()),
-                # }),
                 # kill_signal,
             },
             context: T::default(),
