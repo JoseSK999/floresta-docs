@@ -2,7 +2,7 @@
 
 Great! At this point we should have a sense of the inner workings of `accept_headers`. Let's now understand the `connect_block` method, which performs the actual block validation and updates the `ChainStateInner` fields and database.
 
-`connect_block` takes a `Block`, an UTXO set inclusion `Proof` from `rustreexo`, the inputs to spend from the UTXO set and the hashes from said inputs. If result is `Ok` the function returns the height.
+`connect_block` takes a `Block`, an UTXO set inclusion `Proof` from `rustreexo`, the outputs to spend from the UTXO set (stored with metadata in a custom floresta type called `UtxoData`) and the hashes from said outputs. If result is `Ok` the function returns the height.
 
 ```rust
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
@@ -11,7 +11,7 @@ fn connect_block(
     &self,
     block: &Block,
     proof: Proof,
-    inputs: HashMap<OutPoint, TxOut>,
+    inputs: HashMap<OutPoint, UtxoData>,
     del_hashes: Vec<sha256::Hash>,
 ) -> Result<u32, BlockchainError> {
     let header = self.get_disk_block_header(&block.block_hash())?;

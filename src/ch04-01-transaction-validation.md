@@ -9,7 +9,7 @@ pub fn validate_block_no_acc(
     &self,
     block: &Block,
     height: u32,
-    inputs: HashMap<OutPoint, TxOut>,
+    inputs: HashMap<OutPoint, UtxoData>,
 ) -> Result<(), BlockchainError> {
     # if !block.check_merkle_root() {
         # return Err(BlockValidationErrors::BadMerkleRoot)?;
@@ -124,7 +124,7 @@ Filename: pruned_utreexo/consensus.rs
 #[allow(unused)]
 pub fn verify_block_transactions(
     height: u32,
-    mut utxos: HashMap<OutPoint, TxOut>,
+    mut utxos: HashMap<OutPoint, UtxoData>,
     transactions: &[Transaction],
     subsidy: u64,
     verify_script: bool,
@@ -151,7 +151,7 @@ pub fn verify_block_transactions(
 
         // Actually verify the transaction
         let (in_value, out_value) =
-            Self::verify_transaction(transaction, &mut utxos, verify_script, flags)?;
+            Self::verify_transaction(transaction, &mut utxos, height, verify_script, flags)?;
 
         // Fee is the difference between inputs and outputs
         fee += in_value - out_value;
@@ -179,7 +179,8 @@ pub fn verify_block_transactions(
 ///     - The transaction doesn't have duplicate inputs (implicitly checked by the hashmap)
 fn verify_transaction(
     transaction: &Transaction,
-    utxos: &mut HashMap<OutPoint, TxOut>,
+    utxos: &mut HashMap<OutPoint, UtxoData>,
+    height: u32,
     _verify_script: bool,
     _flags: c_uint,
 ) -> Result<(u64, u64), BlockchainError> {
@@ -193,14 +194,20 @@ fn verify_transaction(
 
     let mut in_value = 0;
     for input in transaction.input.iter() {
-        let txo = Self::get_utxo(input, utxos, txid)?;
+        let utxo = Self::get_utxo(input, utxos, txid)?;
+        let txout = &utxo.txout;
 
-        in_value += txo.value.to_sat();
+        // A coinbase output created at height n can only be spent at height >= n + 100
+        if utxo.is_coinbase && (height < utxo.creation_height + 100) {
+            return Err(tx_err!(txid, CoinbaseNotMatured))?;
+        }
 
         // Check script sizes (spent txo pubkey, and current tx scriptsig and TODO witness)
-        Self::validate_script_size(&txo.script_pubkey, txid)?;
+        Self::validate_script_size(&txout.script_pubkey, txid)?;
         Self::validate_script_size(&input.script_sig, txid)?;
         // TODO check also witness script size
+
+        in_value += txout.value.to_sat();
     }
 
     // Value in should be greater or equal to value out. Otherwise, inflation.
@@ -216,7 +223,10 @@ fn verify_transaction(
     #[cfg(feature = "bitcoinconsensus")]
     if _verify_script {
         transaction
-            .verify_with_flags(|outpoint| utxos.remove(outpoint), _flags)
+            .verify_with_flags(
+                |outpoint| utxos.remove(outpoint).map(|utxo| utxo.txout),
+                _flags,
+            )
             .map_err(|e| tx_err!(txid, ScriptValidationError, e.to_string()))?;
     };
 

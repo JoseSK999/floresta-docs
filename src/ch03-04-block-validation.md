@@ -15,7 +15,7 @@ pub fn validate_block_no_acc(
     &self,
     block: &Block,
     height: u32,
-    inputs: HashMap<OutPoint, TxOut>,
+    inputs: HashMap<OutPoint, UtxoData>,
 ) -> Result<(), BlockchainError> {
     if !block.check_merkle_root() {
         return Err(BlockValidationErrors::BadMerkleRoot)?;

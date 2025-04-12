@@ -91,7 +91,7 @@ pub trait BlockchainInterface {
         # &self,
         # block: &Block,
         # proof: Proof,
-        # inputs: HashMap<OutPoint, TxOut>,
+        # inputs: HashMap<OutPoint, UtxoData>,
         # del_hashes: Vec<sha256::Hash>,
         # acc: Stump,
     # ) -> Result<(), Self::Error>;
@@ -137,7 +137,7 @@ pub trait UpdatableChainstate {
         &self,
         block: &Block,
         proof: Proof,
-        inputs: HashMap<OutPoint, TxOut>,
+        inputs: HashMap<OutPoint, UtxoData>,
         del_hashes: Vec<sha256::Hash>,
     ) -> Result<u32, BlockchainError>;
     // ...
