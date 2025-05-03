@@ -55,7 +55,6 @@ where
                 # node_rx,
                 # node_tx,
                 # address_man,
-                # last_headers_request: Instant::now(),
                 # last_tip_update: Instant::now(),
                 # last_connection: Instant::now(),
                 # last_peer_db_dump: Instant::now(),

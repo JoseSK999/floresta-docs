@@ -43,7 +43,6 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) inflight: HashMap<InflightRequests, (u32, Instant)>,
     pub(crate) inflight_user_requests:
         HashMap<UserRequest, (u32, Instant, oneshot::Sender<NodeResponse>)>,
-    pub(crate) last_headers_request: Instant,
     pub(crate) last_tip_update: Instant,
     pub(crate) last_connection: Instant,
     pub(crate) last_peer_db_dump: Instant,

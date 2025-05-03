@@ -59,6 +59,7 @@ Filename: p2p_wire/node_context.rs
 use bitcoin::p2p::ServiceFlags;
 
 pub trait NodeContext {
+    # /// How long we wait for a peer to respond to our request
     const REQUEST_TIMEOUT: u64;
     # /// Max number of simultaneous connections we initiates we are willing to hold
     const MAX_OUTGOING_PEERS: usize = 10;
@@ -86,6 +87,8 @@ pub trait NodeContext {
     const BLOCK_CHECK_INTERVAL: u64 = 60 * 5; // 5 minutes
     # /// How often we send our addresses to our peers
     const SEND_ADDRESSES_INTERVAL: u64 = 60 * 60; // 1 hour
+    # /// How long should we wait for a peer to respond our connection request
+    const CONNECTION_TIMEOUT: u64 = 30; // 30 seconds
 
     fn get_required_services(&self) -> ServiceFlags {
         ServiceFlags::NETWORK
