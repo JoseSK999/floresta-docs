@@ -19,6 +19,11 @@ pub(crate) async fn maybe_open_connection(
         return Ok(());
     }
 
+    // If we've tried getting some connections, but the addresses we have are not
+    // working. Try getting some more addresses from DNS
+    self.maybe_ask_for_dns_peers();
+    self.maybe_use_hadcoded_addresses();
+
     let connection_kind = ConnectionKind::Regular(required_service);
     if self.peers.len() < T::MAX_OUTGOING_PEERS {
         self.create_connection(connection_kind).await;

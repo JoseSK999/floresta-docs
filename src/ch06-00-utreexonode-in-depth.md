@@ -52,6 +52,8 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) last_send_addresses: Instant,
     pub(crate) block_sync_avg: FractionAvg,
     pub(crate) last_feeler: Instant,
+    pub(crate) startup_time: Instant,
+    pub(crate) last_dns_seed_call: Instant,
 
     // 6. Configuration and Metadata
     pub(crate) config: UtreexoNodeConfig,

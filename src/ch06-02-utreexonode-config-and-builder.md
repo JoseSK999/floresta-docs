@@ -39,6 +39,8 @@ where
         Ok(UtreexoNode {
             common: NodeCommon {
                 // Initialization of many fields :P
+                # last_dns_seed_call: Instant::now(),
+                # startup_time: Instant::now(),
                 # block_sync_avg: FractionAvg::new(0, 0),
                 # last_filter: chain.get_block_hash(0).unwrap(),
                 # block_filters,
@@ -170,11 +172,14 @@ pub struct UtreexoNodeConfig {
     # /// Whether to allow fallback to v1 transport if v2 connection fails.
     # /// Defaults to true.
     # pub allow_v1_fallback: bool,
+    # /// Whether to disable DNS seeds. Defaults to false.
+    # pub disable_dns_seeds: bool,
 # }
 #
 # impl Default for UtreexoNodeConfig {
     # fn default() -> Self {
         # UtreexoNodeConfig {
+            # disable_dns_seeds: false,
             # network: Network::Bitcoin,
             # pow_fraud_proofs: false,
             # compact_filters: false,
@@ -256,11 +261,14 @@ Additional configurations include `datadir` for specifying the node's data direc
     /// Whether to allow fallback to v1 transport if v2 connection fails.
     /// Defaults to true.
     pub allow_v1_fallback: bool,
+    /// Whether to disable DNS seeds. Defaults to false.
+    pub disable_dns_seeds: bool,
 }
 #
 # impl Default for UtreexoNodeConfig {
     # fn default() -> Self {
         # UtreexoNodeConfig {
+            # disable_dns_seeds: false,
             # network: Network::Bitcoin,
             # pow_fraud_proofs: false,
             # compact_filters: false,
@@ -282,8 +290,8 @@ Additional configurations include `datadir` for specifying the node's data direc
 
 If one of `pow_fraud_proofs` or `assume_utreexo` is set, the `backfill` option enables background and full validation of the chain, which is recommended for security since the node skipped the IBD.
 
-For block filters, `filter_start_height` helps optimize downloads by starting from a specific height rather than the chain’s beginning. In relation to networking, `user_agent` allows nodes to customize their identifier when advertising to peers.
+For block filters, `filter_start_height` helps optimize downloads by starting from a specific height rather than the chain’s beginning. In relation to networking, `user_agent` allows nodes to customize their identifier when advertising to peers. Also, `allow_v1_fallback` is used for specifying if our node should use the version 1 P2P transport protocol as a fallback if we encounter a problem when connecting via the [version 2 transport](https://github.com/bitcoin/bips/blob/master/bip-0324.mediawiki).
 
-Lastly, `allow_v1_fallback` is used for specifying if our node should use the version 1 P2P transport protocol as a fallback if we encounter a problem when connecting via the [version 2 transport](https://github.com/bitcoin/bips/blob/master/bip-0324.mediawiki).
+Lastly, if `disable_dns_seeds` is set, our node will not perform any DNS seed lookups to find peers. Instead, it will use hardcoded peer addresses, found at the `floresta-wire` [seeds subdirectory](https://github.com/vinteumorg/Floresta/tree/master/crates/floresta-wire/src/p2p_wire/seeds).
 
 This flexible configuration ensures adaptability for various use cases and security levels, from development to production.
