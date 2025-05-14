@@ -12,10 +12,10 @@ fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
     let disk_header = self.get_disk_block_header(&header.block_hash());
 
     match disk_header {
-        Err(BlockchainError::Database(_)) => {
+        Err(e @ BlockchainError::Database(_)) => {
             // If there's a database error we don't know if we already
             // have the header or not
-            return Err(disk_header.unwrap_err());
+            return Err(e);
         }
         Ok(found) => {
             // Possibly reindex to recompute the best_block field
@@ -86,9 +86,13 @@ fn maybe_reindex(&self, potential_tip: &DiskBlockHeader) {
 
     // Check if the disk header is an unvalidated block in the best chain
     if let DiskBlockHeader::HeadersOnly(_, height) = potential_tip {
+        let best_height = self
+            .get_best_block()
+            .expect("infallible: in-memory BestChain is initialized")
+            .0;
 
         // If the best chain height is lower, it needs to be updated
-        if *height > self.get_best_block().unwrap().0 {
+        if *height > best_height {
             let best_chain = self.reindex_chain();
             write_lock!(self).best_block = best_chain;
         }
@@ -116,11 +120,10 @@ The `validate_header` method takes a `BlockHeader` and performs the following ch
 #
 fn validate_header(&self, block_header: &BlockHeader) -> Result<BlockHash, BlockchainError> {
     # let prev_block = self.get_disk_block_header(&block_header.prev_blockhash)?;
-    # let prev_block_height = prev_block.height();
-    # if prev_block_height.is_none() {
-        # return Err(BlockValidationErrors::BlockExtendsAnOrphanChain)?;
-    # }
-    # let height = prev_block_height.unwrap() + 1;
+    # let height = prev_block
+        # .height()
+        # .ok_or(BlockValidationErrors::BlockExtendsAnOrphanChain)?
+        # + 1;
     // ...
 
     // Check pow

@@ -31,9 +31,7 @@ where
         let fixed_peer = config
             .fixed_peer
             .as_ref()
-            .map(|address| {
-                Self::resolve_connect_host(address, Self::get_port(config.network.into()))
-            })
+            .map(|address| Self::resolve_connect_host(address, Self::get_port(config.network)))
             .transpose()?;
 
         Ok(UtreexoNode {
@@ -53,7 +51,7 @@ where
                 # peer_ids: Vec::new(),
                 # peer_by_service: HashMap::new(),
                 # mempool,
-                # network: config.network.into(),
+                # network: config.network,
                 # node_rx,
                 # node_tx,
                 # address_man,

@@ -10,7 +10,7 @@ We have to choose between the two branches, represented by:
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 fn maybe_reorg(&self, branch_tip: BlockHeader) -> Result<(), BlockchainError> {
-    let current_tip = self.get_block_header(&self.get_best_block().unwrap().1)?;
+    let current_tip = self.get_block_header(&self.get_best_block()?.1)?;
     self.check_branch(&branch_tip)?;
 
     let current_work = self.get_branch_work(&current_tip)?;
@@ -23,13 +23,12 @@ fn maybe_reorg(&self, branch_tip: BlockHeader) -> Result<(), BlockchainError> {
     // If the new branch has less work, we just store it as an alternative branch
     // that might become the best chain in the future.
     self.push_alt_tip(&branch_tip)?;
-    let parent_height = self.get_ancestor(&branch_tip)?.height().unwrap();
+
+    let parent_height = self.get_ancestor(&branch_tip)?.try_height()?;
     read_lock!(self)
         .chainstore
-        .save_header(&super::chainstore::DiskBlockHeader::InFork(
-            branch_tip,
-            parent_height + 1,
-        ))?;
+        .save_header(&DiskBlockHeader::InFork(branch_tip, parent_height + 1))?;
+
     Ok(())
 }
 ```
@@ -50,8 +49,7 @@ Let's now dig into reorg logic, with `reorg`. We start by querying the best bloc
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 fn reorg(&self, new_tip: BlockHeader) -> Result<(), BlockchainError> {
-    let current_best_block = self.get_best_block().unwrap().1;
-    let current_best_block = self.get_block_header(&current_best_block)?;
+    let current_best_block = self.get_block_header(&self.get_best_block()?.1)?;
     let fork_point = self.find_fork_point(&new_tip)?;
 
     self.mark_chain_as_inactive(&current_best_block, fork_point.block_hash())?;

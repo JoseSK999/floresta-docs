@@ -31,10 +31,10 @@ pub fn validate_block_no_acc(
     #
     # // Validate block transactions
     # let subsidy = read_lock!(self).consensus.get_subsidy(height);
-    # let verify_script = self.verify_script(height);
+    # let verify_script = self.verify_script(height)?;
     // ...
     #[cfg(feature = "bitcoinconsensus")]
-    let flags = self.get_validation_flags(height, block.header.block_hash());
+    let flags = self.get_validation_flags(height, block.block_hash());
     #[cfg(not(feature = "bitcoinconsensus"))]
     let flags = 0;
     Consensus::verify_block_transactions(

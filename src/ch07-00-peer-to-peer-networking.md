@@ -24,7 +24,7 @@ pub(crate) async fn open_non_proxy_connection(
     requests_rx: UnboundedReceiver<NodeRequest>,
     peer_id_count: u32,
     mempool: Arc<Mutex<Mempool>>,
-    network: bitcoin::Network,
+    network: Network,
     node_tx: UnboundedSender<NodeNotification>,
     user_agent: String,
     allow_v1_fallback: bool,
@@ -89,7 +89,7 @@ pub(crate) async fn open_proxy_connection(
     // ...
     # kind: ConnectionKind,
     # mempool: Arc<Mutex<Mempool>>,
-    # network: bitcoin::Network,
+    # network: Network,
     # node_tx: UnboundedSender<NodeNotification>,
     # peer_id: usize,
     # address: LocalAddress,

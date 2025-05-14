@@ -28,25 +28,9 @@ pub fn new(
 ) -> ChainState<PersistedState> {
 ```
 
-The first argument is our `ChainStore` implementation, the second one is a `Network` enum, and thirdly the `AssumeValidArg` enum.
+The first argument is our `ChainStore` implementation, the second one is [the `Network` enum](https://docs.rs/bitcoin/latest/bitcoin/enum.Network.html) from the `bitcoin` crate, and thirdly the `AssumeValidArg` enum.
 
-`Network` is an enum with four variants: `Bitcoin` (mainchain), `Testnet`, `Regtest` and `Signet`. It's declared in the _lib.rs_ of `floresta-chain`, along with conversions from and to `bitcoin::network::Network`, an identical enum from the `bitcoin` crate.
-
-```rust
-# // Path: floresta-chain/src/lib.rs
-#
-// This is the only thing implemented in lib.rs
-pub enum Network {
-    Bitcoin,
-    Testnet,
-    Regtest,
-    Signet,
-}
-
-// impl From<bitcoin::network::Network> for Network { ... }
-
-// impl From<Network> for bitcoin::network::Network { ... }
-```
+The `Network` enum acknowledges four kinds of networks: `Bitcoin` (mainchain), `Testnet` (version 3), `Testnet4`, `Signet` and `Regtest`.
 
 ### The Assume-Valid Lore
 
@@ -75,6 +59,7 @@ pub enum AssumeValidArg {
 ### Genesis and Assume-Valid Blocks
 
 The first part of the body of `ChainState::new` (let's omit the `impl` block from now on):
+
 ```rust
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
@@ -83,7 +68,7 @@ pub fn new(
     network: Network,
     assume_valid: AssumeValidArg,
 ) -> ChainState<PersistedState> {
-    let parameters = network.into();
+    let parameters = network.try_into().expect("Unsupported network");
     let genesis = genesis_block(&parameters);
 
     chainstore
@@ -97,7 +82,8 @@ pub fn new(
         .update_block_index(0, genesis.block_hash())
         .expect("Error updating index");
 
-    let assume_valid = ChainParams::get_assume_valid(network, assume_valid);
+    let assume_valid =
+        ChainParams::get_assume_valid(network, assume_valid).expect("Unsupported network");
     // ...
     # ChainState {
         # inner: RwLock::new(ChainStateInner {
@@ -121,7 +107,7 @@ pub fn new(
 }
 ```
 
-First, we use the `genesis_block` function from `bitcoin` to retrieve the genesis block based on the specified parameters, which are determined by our `Network`.
+First, we use the `genesis_block` function from `bitcoin` to retrieve the genesis block based on the specified parameters, which are determined by the `Network` kind.
 
 Then we save the genesis header into `chainstore`, which of course is `FullyValid` and has height 0. We also link the index 0 with the genesis block hash.
 
@@ -134,26 +120,30 @@ Filename: pruned_utreexo/chainparams.rs
 #
 // Omitted: impl ChainParams {
 
-pub fn get_assume_valid(network: Network, arg: AssumeValidArg) -> Option<BlockHash> {
+pub fn get_assume_valid(
+    network: Network,
+    arg: AssumeValidArg,
+) -> Result<Option<BlockHash>, BlockchainError> {
     match arg {
-        // No assume-valid hash
-        AssumeValidArg::Disabled => None,
-        // Use the user-provided hash
-        AssumeValidArg::UserInput(hash) => Some(hash),
-        // Fetch the hardcoded values, depending on the network
+        AssumeValidArg::Disabled => Ok(None),
+        AssumeValidArg::UserInput(hash) => Ok(Some(hash)),
         AssumeValidArg::Hardcoded => match network {
-            Network::Bitcoin => Some(bhash!(
+            Network::Bitcoin => Ok(Some(bhash!(
                 "00000000000000000000569f4d863c27e667cbee8acc8da195e7e5551658e6e9"
-            )),
-            Network::Testnet => Some(bhash!(
+            ))),
+            Network::Testnet => Ok(Some(bhash!(
                 "000000000000001142ad197bff16a1393290fca09e4ca904dd89e7ae98a90fcd"
-            )),
-            Network::Signet => Some(bhash!(
+            ))),
+            Network::Testnet4 => Ok(Some(bhash!(
+                "0000000006af13c1117f3e2eb14f10eb9736e255713118cf7eb6659b1448efc1"
+            ))),
+            Network::Signet => Ok(Some(bhash!(
                 "0000003ed17b9c93954daab00d73ccbd0092074c4ebfc751c7458d58b827dfea"
-            )),
-            Network::Regtest => Some(bhash!(
+            ))),
+            Network::Regtest => Ok(Some(bhash!(
                 "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
-            )),
+            ))),
+            network => Err(BlockchainError::UnsupportedNetwork(network)),
         },
     }
 }

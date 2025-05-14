@@ -38,10 +38,10 @@ This idea, adapted to Floresta, is what we call `Assume-Utreexo`, a hardcoded UT
 # // Path: floresta-chain/src/pruned_utreexo/chainparams.rs
 #
 impl ChainParams {
-    pub fn get_assume_utreexo(network: Network) -> AssumeUtreexoValue {
-        let genesis = genesis_block(Params::new(network.into()));
+    pub fn get_assume_utreexo(network: Network) -> Result<AssumeUtreexoValue, BlockchainError> {
+        let genesis = genesis_block(Params::new(network));
         match network {
-            Network::Bitcoin => AssumeUtreexoValue {
+            Network::Bitcoin => Ok(AssumeUtreexoValue {
                 block_hash: bhash!(
                     "00000000000000000000569f4d863c27e667cbee8acc8da195e7e5551658e6e9"
                 ),
@@ -68,49 +68,64 @@ impl ChainParams {
                 ]
                 .to_vec(),
                 leaves: 2587882501,
-            },
-            Network::Testnet => AssumeUtreexoValue {
+            }),
+            Network::Testnet => Ok(AssumeUtreexoValue {
                 // ...
                 # block_hash: genesis.block_hash(),
                 # height: 0,
                 # leaves: 0,
                 # roots: Vec::new(),
-            },
-            Network::Signet => AssumeUtreexoValue {
+            }),
+            Network::Testnet4 => Ok(AssumeUtreexoValue {
                 // ...
                 # block_hash: genesis.block_hash(),
                 # height: 0,
                 # leaves: 0,
                 # roots: Vec::new(),
-            },
-            Network::Regtest => AssumeUtreexoValue {
+            }),
+            Network::Signet => Ok(AssumeUtreexoValue {
                 // ...
                 # block_hash: genesis.block_hash(),
                 # height: 0,
                 # leaves: 0,
                 # roots: Vec::new(),
-            },
+            }),
+            Network::Regtest => Ok(AssumeUtreexoValue {
+                // ...
+                # block_hash: genesis.block_hash(),
+                # height: 0,
+                # leaves: 0,
+                # roots: Vec::new(),
+            }),
+            network => Err(BlockchainError::UnsupportedNetwork(network)),
         }
     }
     // ...
     #
-    # pub fn get_assume_valid(network: Network, arg: AssumeValidArg) -> Option<BlockHash> {
+    # pub fn get_assume_valid(
+        network: Network,
+        arg: AssumeValidArg,
+    ) -> Result<Option<BlockHash>, BlockchainError> {
         # match arg {
-            # AssumeValidArg::Disabled => None,
-            # AssumeValidArg::UserInput(hash) => Some(hash),
+            # AssumeValidArg::Disabled => Ok(None),
+            # AssumeValidArg::UserInput(hash) => Ok(Some(hash)),
             # AssumeValidArg::Hardcoded => match network {
-                # Network::Bitcoin => Some(bhash!(
+                # Network::Bitcoin => Ok(Some(bhash!(
                     # "00000000000000000000569f4d863c27e667cbee8acc8da195e7e5551658e6e9"
-                # )),
-                # Network::Testnet => Some(bhash!(
+                # ))),
+                # Network::Testnet => Ok(Some(bhash!(
                     # "000000000000001142ad197bff16a1393290fca09e4ca904dd89e7ae98a90fcd"
-                # )),
-                # Network::Signet => Some(bhash!(
+                # ))),
+                # Network::Testnet4 => Ok(Some(bhash!(
+                    # "0000000006af13c1117f3e2eb14f10eb9736e255713118cf7eb6659b1448efc1"
+                # ))),
+                # Network::Signet => Ok(Some(bhash!(
                     # "0000003ed17b9c93954daab00d73ccbd0092074c4ebfc751c7458d58b827dfea"
-                # )),
-                # Network::Regtest => Some(bhash!(
+                # ))),
+                # Network::Regtest => Ok(Some(bhash!(
                     # "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
-                # )),
+                # ))),
+                # network => Err(BlockchainError::UnsupportedNetwork(network)),
             # },
         # }
     # }

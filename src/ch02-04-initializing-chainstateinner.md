@@ -51,7 +51,7 @@ pub fn new(
     network: Network,
     assume_valid: AssumeValidArg,
 ) -> ChainState<PersistedState> {
-    # let parameters = network.into();
+    # let parameters = network.try_into().expect("Unsupported network");
     # let genesis = genesis_block(&parameters);
     #
     # chainstore
@@ -65,7 +65,8 @@ pub fn new(
         # .update_block_index(0, genesis.block_hash())
         # .expect("Error updating index");
     #
-    # let assume_valid = ChainParams::get_assume_valid(network, assume_valid);
+    # let assume_valid =
+        # ChainParams::get_assume_valid(network, assume_valid).expect("Unsupported network");
     // ...
     ChainState {
         inner: RwLock::new(ChainStateInner {
