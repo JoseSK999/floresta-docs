@@ -44,11 +44,11 @@ Filename: pruned_utreexo/chain_state.rs
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 pub struct BestChain {
-    best_block: BlockHash,
-    depth: u32,
-    validation_index: BlockHash,
-    alternative_tips: Vec<BlockHash>,
-    assume_valid_index: u32,
+    pub best_block: BlockHash,
+    pub depth: u32,
+    pub validation_index: BlockHash,
+    pub alternative_tips: Vec<BlockHash>,
+    pub assume_valid_index: u32,
 }
 ```
 

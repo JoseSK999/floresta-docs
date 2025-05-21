@@ -47,7 +47,7 @@ fn connect_block(
     # #[cfg(feature = "metrics")]
     # metrics::get_metrics().block_height.set(height.into());
 
-    if !self.is_in_ibd() || height % 10_000 == 0 {
+    if !self.is_in_ibd() || height % 100_000 == 0 {
         self.flush()?;
     }
 
@@ -73,7 +73,7 @@ After this, we have fully validated the block! The next steps in `connect_block`
 
 After block validation we call `update_view` to mark the disk header as `FullyValid` (`ChainStore::save_header`), update the block hash index (`ChainStore::update_block_index`) and also update `ChainStateInner.acc` and the validation index of `best_block`.
 
-Then, we call `UpdatableChainstate::flush` _every 10,000 blocks during IBD_ or for _each new block once synced_. In order, this method invokes:
+Then, we call `UpdatableChainstate::flush` _every 100,000 blocks during IBD_ or for _each new block once synced_. In order, this method invokes:
 1. `save_acc`, which serializes the accumulator and calls `ChainStore::save_roots`
 2. `ChainStore::save_height`
 3. `ChainStore::flush`, to immediately flush to disk all pending writes

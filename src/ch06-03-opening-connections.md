@@ -84,10 +84,7 @@ pub(crate) async fn create_connection(&mut self, kind: ConnectionKind) -> Option
             .get_address_to_connect(required_services, matches!(kind, ConnectionKind::Feeler)),
     };
 
-    # debug!(
-        # "attempting connection with address={:?} kind={:?}",
-        # address, kind
-    # );
+    # debug!("attempting connection with address={address:?} kind={kind:?}",);
     let (peer_id, address) = address?;
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)

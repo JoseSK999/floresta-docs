@@ -8,7 +8,7 @@ In short, the method takes a `bitcoin::block::Header` (type alias `BlockHeader`)
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
-    trace!("Accepting header {header:?}");
+    debug!("Accepting header {header:?}");
     let disk_header = self.get_disk_block_header(&header.block_hash());
 
     match disk_header {
@@ -34,7 +34,7 @@ fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
     // Update our current tip
     if header.prev_blockhash == best_block.1 {
         let height = best_block.0 + 1;
-        trace!("Header builds on top of our best chain");
+        debug!("Header builds on top of our best chain");
 
         let mut inner = write_lock!(self);
         inner.best_block.new_block(block_hash, height);
@@ -46,7 +46,7 @@ fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
 
         inner.chainstore.update_block_index(height, block_hash)?;
     } else {
-        trace!("Header not in the best chain");
+        debug!("Header not in the best chain");
         self.maybe_reorg(header)?;
     }
 

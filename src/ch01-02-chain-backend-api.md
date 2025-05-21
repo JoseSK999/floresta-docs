@@ -8,8 +8,7 @@ The lists below are only meant to provide an initial sense of the expected chain
 
 The `BlockchainInterface` methods are mainly about _getting information_ from the current view of the blockchain and state of validation.
 
-It has an associated generic `Error` type bounded by the `core2::error::Error` trait. In other words, implementations of `BlockchainInterface` can choose their own error type as long as it implements `core2::error::Error`.
-> `core2` is a crate providing a `no_std` version of the `std::error::Error` trait.
+It defines a generic associated error type bounded by the `std::error::Error` trait—or, in `no-std` environments, by Floresta's own minimal `Error` marker trait—so each `BlockchainInterface` implementation can pick its own error type.
 
 The list of required methods:
 
@@ -31,6 +30,7 @@ The list of required methods:
 - `get_chain_tips` block hashes, including the best tip and non-canonical ones.
 - `get_fork_point`, to get the block hash where a given branch forks (the branch is represented by its tip block hash).
 - `get_params`, to get the parameters for chain consensus.
+- `acc`, to get the current utreexo accumulator.
 
 Also, we have a `subscribe` method which allows other components to receive notifications of new validated blocks from the blockchain backend.
 
@@ -40,7 +40,7 @@ Filename: floresta-chain/src/pruned_utreexo/mod.rs
 # // Path: floresta-chain/src/pruned_utreexo/mod.rs
 #
 pub trait BlockchainInterface {
-    type Error: core2::error::Error + Send + Sync + 'static;
+    type Error: Error + Send + Sync + 'static;
     // ...
     #
     # fn get_block_hash(&self, height: u32) -> Result<bitcoin::BlockHash, Self::Error>;
@@ -99,6 +99,8 @@ pub trait BlockchainInterface {
     # fn get_fork_point(&self, block: BlockHash) -> Result<BlockHash, Self::Error>;
     #
     # fn get_params(&self) -> bitcoin::params::Params;
+    #
+    # fn acc(&self) -> Stump;
 }
 ```
 
