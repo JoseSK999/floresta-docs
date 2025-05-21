@@ -62,7 +62,7 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) kill_signal: Arc<tokio::sync::RwLock<bool>>,
 }
 
-pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context> {
+pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context = RunningNode> {
     pub(crate) common: NodeCommon<Chain>,
     pub(crate) context: Context,
 }

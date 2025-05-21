@@ -2,7 +2,7 @@
 
 `UtreexoNode` is the top-level type in Floresta, responsible for managing P2P connections, receiving network data, and broadcasting transactions. All its logic is found at the `floresta-wire` crate.
 
-Blocks fetched by `UtreexoNode` are passed to a blockchain backend for validation and state tracking. This backend is represented by a generic `Chain` type. Additionally, `UtreexoNode` relies on a separate generic `Context` type to provide context-specific behavior.
+Blocks fetched by `UtreexoNode` are passed to a blockchain backend for validation and state tracking. This backend is represented by a generic `Chain` type. Additionally, `UtreexoNode` relies on a separate generic `Context` type to provide context-specific behavior. The default `Context` is `RunningNode`, which handles the transition between other contexts (it's the highest level context).
 
 ![](./img/project-org.png)
 
@@ -15,7 +15,7 @@ Filename: floresta-wire/src/p2p_wire/node.rs
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context> {
+pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context = RunningNode> {
     pub(crate) common: NodeCommon<Chain>,
     pub(crate) context: Context,
 }

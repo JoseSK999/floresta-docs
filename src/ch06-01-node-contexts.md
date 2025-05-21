@@ -12,40 +12,9 @@ The three node contexts in Floresta are:
 
 2. **SyncNode**: Responsible for downloading and verifying all blocks in the selected chain, this context ensures the chain's validity. Although it is computationally expensive and time-consuming, it guarantees that the chain is fully validated.
 
-3. **RunningNode**: The primary context during normal operation, it starts after `ChainSelector` finishes. This context processes new blocks (even if `SyncNode` is still running) and handles user requests.
+3. **RunningNode**: The primary context during normal operation, it starts operating after `ChainSelector` finishes. This context processes new blocks (even if `SyncNode` is still running) and handles user requests.
 
-The only `NodeContext` implementation that is part of the public API of `floresta-wire` is the `RunningNode`. You can check the exported modules in the _lib.rs_:
-
-Filename: floresta-wire/src/lib.rs
-
-```rust
-# // Path: floresta-wire/src/lib.rs
-#
-# #[cfg(not(target_arch = "wasm32"))]
-mod p2p_wire;
-
-use bitcoin::block::Header as BlockHeader;
-use bitcoin::Block;
-use bitcoin::Transaction;
-
-// Module re-exports
-# #[cfg(not(target_arch = "wasm32"))]
-pub use p2p_wire::address_man;
-# #[cfg(not(target_arch = "wasm32"))]
-pub use p2p_wire::mempool;
-# #[cfg(not(target_arch = "wasm32"))]
-pub use p2p_wire::node;
-# #[cfg(not(target_arch = "wasm32"))]
-pub use p2p_wire::node_context;
-# #[cfg(not(target_arch = "wasm32"))]
-pub use p2p_wire::node_interface;
-# #[cfg(not(target_arch = "wasm32"))]
-pub use p2p_wire::running_node;
-// Re-export of the configuration struct
-pub use p2p_wire::UtreexoNodeConfig;
-```
-
-However, `RunningNode` will automatically and internally switch to the other two contexts when the `UtreexoNode` is created, and then switch back. Hence, the `RunningNode` context is the default and high-level context that runs in `florestad`.
+`RunningNode` is the highest level context, which will automatically and internally switch to the other two contexts when a `UtreexoNode` is first instantiated, and then switch back. Hence, the `RunningNode` context is the default and high-level context that runs in `florestad`.
 
 ### The NodeContext Trait
 
