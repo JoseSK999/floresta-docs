@@ -18,6 +18,6 @@ level = 1
 [output.linkcheck]
 follow-web-links = true
 # ignore only the bitcoin/bips mediawiki pages
-exclude = [ 'github\.com/bitcoin/bips/blob/master/bip-.*\.mediawiki', 'https://blog.dlsouza.lol/2023/09/28/pow-fraud-proof.html' ]
+exclude = [ 'github\.com/bitcoin/bips/blob/master/bip-.*\.mediawiki' ]
 
 [preprocessor.quiz]
