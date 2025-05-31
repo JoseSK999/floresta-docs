@@ -24,6 +24,9 @@ pub(crate) async fn maybe_open_connection(
     self.maybe_ask_for_dns_peers();
     self.maybe_use_hadcoded_addresses();
 
+    // Try to connect with manually added peers
+    self.maybe_open_connection_with_added_peers().await?;
+
     let connection_kind = ConnectionKind::Regular(required_service);
     if self.peers.len() < T::MAX_OUTGOING_PEERS {
         self.create_connection(connection_kind).await;
@@ -104,7 +107,11 @@ pub(crate) async fn create_connection(&mut self, kind: ConnectionKind) -> Option
     {
         return None;
     }
-    self.open_connection(kind, peer_id, address).await;
+
+    // Default to transport V1. Will be updated after the P2P transport negotiation.
+    self.open_connection(kind, peer_id, address, TransportProtocol::V1)
+        .await
+        .ok()?;
 
     Some(())
 }
@@ -128,7 +135,8 @@ pub(crate) async fn open_connection(
     kind: ConnectionKind,
     peer_id: usize,
     address: LocalAddress,
-) {
+    transport_protocol: TransportProtocol,
+) -> Result<(), WireError> {
     let (requests_tx, requests_rx) = unbounded_channel();
     if let Some(ref proxy) = self.socks5 {
         spawn(timeout(
@@ -189,11 +197,13 @@ pub(crate) async fn open_connection(
             # address_id: peer_id as u32,
             # height: 0,
             # banscore: 0,
-            # transport_protocol: TransportProtocol::V1, // Default to V1, will be updated when peer is ready.
+            # transport_protocol,
         },
     );
 
     self.peer_id_count += 1;
+
+    Ok(())
 }
 ```
 

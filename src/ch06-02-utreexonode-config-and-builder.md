@@ -14,8 +14,8 @@ Let's start with the builder function, taking a `UtreexoNodeConfig`, the `Chain`
 impl<T, Chain> UtreexoNode<Chain, T>
 where
     T: 'static + Default + NodeContext,
-    WireError: From<<Chain as BlockchainInterface>::Error>,
-    Chain: BlockchainInterface + UpdatableChainstate + 'static,
+    Chain: ChainBackend + 'static,
+    WireError: From<Chain::Error>,
 {
     pub fn new(
         config: UtreexoNodeConfig,
@@ -69,6 +69,7 @@ where
                 # fixed_peer,
                 # config,
                 # kill_signal,
+                # added_peers: Vec::new(),
             },
             context: T::default(),
         })

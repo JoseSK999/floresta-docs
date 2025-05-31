@@ -15,16 +15,24 @@ Filename: floresta-wire/src/p2p_wire/node.rs
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context = RunningNode> {
+pub struct UtreexoNode<Chain: ChainBackend, Context = RunningNode> {
     pub(crate) common: NodeCommon<Chain>,
     pub(crate) context: Context,
 }
 ```
 
-The `Chain` backend must implement two key traits:
+The `Chain` backend must implement the `ChainBackend` trait, which is just shorthand for the two key traits that define the backend.
 
-- `UpdatableChainstate`: Provides methods to update the state of the blockchain backend.
-- `BlockchainInterface`: Defines the interface for interacting with other components, such as the `UtreexoNode`.
+```rust
+# // Path: floresta-chain/src/pruned_utreexo/mod.rs
+#
+pub trait ChainBackend: BlockchainInterface + UpdatableChainstate {}
+```
+
+Each trait defines a distinct responsibility of our blockchain backend:
+
+- `UpdatableChainstate`: Methods to update the state of the blockchain backend.
+- `BlockchainInterface`: Defines the interface for interacting with other components, such as `UtreexoNode`.
 
 Both traits are located in the `floresta-chain` library crate, in _src/pruned_utreexo/mod.rs_.
 

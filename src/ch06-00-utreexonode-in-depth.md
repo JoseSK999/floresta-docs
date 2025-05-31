@@ -15,7 +15,7 @@ Filename: floresta-wire/src/p2p_wire/node.rs
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
+pub struct NodeCommon<Chain: ChainBackend> {
     // 1. Core Blockchain and Transient Data
     pub(crate) chain: Chain,
     pub(crate) blocks: HashMap<BlockHash, (PeerId, UtreexoBlock)>,
@@ -30,6 +30,7 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) peer_by_service: HashMap<ServiceFlags, Vec<u32>>,
     pub(crate) max_banscore: u32,
     pub(crate) address_man: AddressMan,
+    pub(crate) added_peers: Vec<AddedPeerInfo>,
 
     // 3. Internal Communication
     pub(crate) node_rx: UnboundedReceiver<NodeNotification>,
@@ -62,7 +63,7 @@ pub struct NodeCommon<Chain: BlockchainInterface + UpdatableChainstate> {
     pub(crate) kill_signal: Arc<tokio::sync::RwLock<bool>>,
 }
 
-pub struct UtreexoNode<Chain: BlockchainInterface + UpdatableChainstate, Context = RunningNode> {
+pub struct UtreexoNode<Chain: ChainBackend, Context = RunningNode> {
     pub(crate) common: NodeCommon<Chain>,
     pub(crate) context: Context,
 }
@@ -78,13 +79,13 @@ Although the `Context` generic in the type definition is not constrained by any 
 impl<T, Chain> UtreexoNode<Chain, T>
 where
     T: 'static + Default + NodeContext,
-    WireError: From<<Chain as BlockchainInterface>::Error>,
-    Chain: BlockchainInterface + UpdatableChainstate + 'static,
+    Chain: ChainBackend + 'static,
+    WireError: From<Chain::Error>,
 {
 // ...
 ```
 
-In this implementation block, we also encounter a `WireError`, which serves as the unified error type for methods in `UtreexoNode`. It must implement the `From` trait to convert errors produced by the `Chain` backend via the `BlockchainInterface` trait.
+In this implementation block, we also encounter a `WireError`, which serves as the unified error type for methods in `UtreexoNode`. It must implement the `From` trait to convert errors produced by the `Chain` backend via the `BlockchainInterface` trait (i.e., the `Error` associated type of the trait).
 
 > The `WireError` type is defined in the _p2p_wire/error.rs_ file and is the primary error type in `floresta-wire`, alongside `PeerError`, located in _p2p_wire/peer.rs_.
 
@@ -95,14 +96,14 @@ To avoid repetitively calling `self.common.field_name` to access the many inner 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-impl<Chain: BlockchainInterface + UpdatableChainstate, T> Deref for UtreexoNode<Chain, T> {
+impl<Chain: ChainBackend, T> Deref for UtreexoNode<Chain, T> {
     fn deref(&self) -> &Self::Target {
         &self.common
     }
     type Target = NodeCommon<Chain>;
 }
 
-impl<T, Chain: BlockchainInterface + UpdatableChainstate> DerefMut for UtreexoNode<Chain, T> {
+impl<T, Chain: ChainBackend> DerefMut for UtreexoNode<Chain, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.common
     }

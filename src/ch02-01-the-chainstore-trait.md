@@ -11,7 +11,8 @@ The methods required by `ChainStore`, designed for interaction with persistent s
 - `save_height` / `load_height`: Save or load the current chain tip data.
 - `save_header` / `get_header`: Save or retrieve a block header by its `BlockHash`.
 - `get_block_hash` / `update_block_index`: Retrieve or associate a `BlockHash` with a chain height.
-- `flush`: Immediately persist saved data that is still in memory. This ensures data recovery in case of a crash.
+- `flush`: Immediately persist saved data still in memory. This ensures data recovery in case of a crash.
+- `check_integrity`: Performs a database integrity check. This can be a no-op if our implementation leverages a database crate that ensures integrity.
 
 In other words, the implementation of these methods should allow us to save and load:
 
@@ -55,6 +56,8 @@ pub trait ChainStore {
     # fn flush(&self) -> Result<(), Self::Error>;
     #
     # fn update_block_index(&self, height: u32, hash: BlockHash) -> Result<(), Self::Error>;
+    #
+    # fn check_integrity(&self) -> Result<(), Self::Error>;
 }
 ```
 
@@ -154,6 +157,10 @@ impl ChainStore for KvChainStore<'_> {
         self.meta.get(&"roots")
     }
 
+    # fn check_integrity(&self) -> Result<(), Self::Error> {
+        # Ok(())
+    # }
+    #
     fn save_roots(&self, roots: Vec<u8>) -> Result<(), Self::Error> {
         self.meta.set(&"roots", &roots)?;
         Ok(())
@@ -252,6 +259,10 @@ impl ChainStore for KvChainStore<'_> {
     # type Error = kv::Error;
     # fn load_roots(&self) -> Result<Option<Vec<u8>>, Self::Error> {
         # self.meta.get(&"roots")
+    # }
+    #
+    # fn check_integrity(&self) -> Result<(), Self::Error> {
+        # Ok(())
     # }
     #
     # fn save_roots(&self, roots: Vec<u8>) -> Result<(), Self::Error> {
