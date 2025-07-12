@@ -49,11 +49,11 @@ impl<PersistedState: ChainStore> UpdatableChainstate for ChainState<PersistedSta
 
 As Floresta is currently only pruned, the expected database primarily consists of the block header chain and the utreexo accumulator; blocks themselves are not stored.
 
-The default implementation of `ChainStore` is `KvChainStore`, which uses a key-value store. This means that developers may:
+The default implementation of `ChainStore` is `FlatChainStore`, but we also provide a simpler `KvChainStore` implementation. This means that developers may:
 
 - Implement custom `UpdatableChainstate + BlockchainInterface` types for use as `Chain` backends.
 - Use the provided `ChainState` backend:
     - With their own `ChainStore` implementation.
-    - Or the provided `KvChainStore`.
+    - Or the provided `FlatChainStore` or `KvChainStore` implementations.
 
 Next, let’s build the `ChainState` struct step by step!

@@ -116,11 +116,7 @@ Filename: pruned_utreexo/consensus.rs
 /// - The first transaction in the block must be coinbase
 /// - The coinbase transaction must have the correct value (subsidy + fees)
 /// - The block must not create more coins than allowed
-/// - All transactions must be valid:
-///     - The transaction must not be coinbase (already checked)
-///     - The transaction must not have duplicate inputs
-///     - The transaction must not spend more coins than it claims in the inputs
-///     - The transaction must have valid scripts
+/// - All transactions must be valid, as verified by [`Consensus::verify_transaction`]
 #[allow(unused)]
 pub fn verify_block_transactions(
     height: u32,
@@ -130,7 +126,7 @@ pub fn verify_block_transactions(
     verify_script: bool,
     flags: c_uint,
 ) -> Result<(), BlockchainError> {
-    // Blocks must contain at least one transaction (i.e. the coinbase)
+    // Blocks must contain at least one transaction (i.e., the coinbase)
     if transactions.is_empty() {
         return Err(BlockValidationErrors::EmptyBlock)?;
     }
@@ -143,7 +139,6 @@ pub fn verify_block_transactions(
             if !transaction.is_coinbase() {
                 return Err(BlockValidationErrors::FirstTxIsNotCoinbase)?;
             }
-            // Check coinbase input and output script limits
             Self::verify_coinbase(transaction)?;
             // Skip next checks: coinbase input is exempt, coinbase reward checked later
             continue;
@@ -172,12 +167,17 @@ pub fn verify_block_transactions(
     Ok(())
 }
 
-/// Verifies a single transaction. This function checks the following:
-///     - The transaction doesn't spend more coins than it claims in the inputs
-///     - The transaction doesn't create more coins than allowed
-///     - The transaction has valid scripts
-///     - The transaction doesn't have duplicate inputs (implicitly checked by the hashmap)
-fn verify_transaction(
+/// Verifies a single, non-coinbase transaction. To verify (the structure of) a coinbase
+/// transaction, use [`Consensus::verify_coinbase`].
+///
+/// This function checks that the transaction:
+///   - Has at least one input and one output
+///   - Doesn't have null PrevOuts (reserved only for coinbase transactions)
+///   - Doesn't spend more coins than it claims in the inputs
+///   - Doesn't "move" more coins than allowed (at most 21 million)
+///   - Spends mature coins, in case any input refers to a coinbase transaction
+///   - Has valid scripts (if we don't assume them), and within the allowed size
+pub fn verify_transaction(
     transaction: &Transaction,
     utxos: &mut HashMap<OutPoint, UtxoData>,
     height: u32,
@@ -185,6 +185,13 @@ fn verify_transaction(
     _flags: c_uint,
 ) -> Result<(u64, u64), BlockchainError> {
     let txid = || transaction.compute_txid();
+
+    if transaction.input.is_empty() {
+        return Err(tx_err!(txid, EmptyInputs))?;
+    }
+    if transaction.output.is_empty() {
+        return Err(tx_err!(txid, EmptyOutputs))?;
+    }
 
     let out_value: u64 = transaction
         .output
@@ -194,6 +201,10 @@ fn verify_transaction(
 
     let mut in_value = 0;
     for input in transaction.input.iter() {
+        // Null PrevOuts are only allowed in coinbase inputs
+        if input.previous_output.is_null() {
+            return Err(tx_err!(txid, NullPrevOut))?;
+        }
         let utxo = Self::get_utxo(input, utxos, txid)?;
         let txout = &utxo.txout;
 
@@ -227,14 +238,14 @@ fn verify_transaction(
                 |outpoint| utxos.remove(outpoint).map(|utxo| utxo.txout),
                 _flags,
             )
-            .map_err(|e| tx_err!(txid, ScriptValidationError, e.to_string()))?;
+            .map_err(|e| tx_err!(txid, ScriptValidationError, format!("{e:?}")))?;
     };
 
     Ok((in_value, out_value))
 }
 ```
 
-In general the function behavior is well explained in the comments. Something to note is that we need the `bitcoinconsensus` feature set in order to use `verify_with_flags`, to verify the transaction scripts. If it's not set we won't perform script validation, so `bitcoinconsensus` should probably be mandatory, not just opt-in.
+In general, the function behavior is well explained in the comments. Something to note is that we need the `bitcoinconsensus` feature set in order to compile `verify_with_flags` and verify the transaction scripts. Because this method is just a C++ call behind the scenes, we make it optional for some architectures to compile the Floresta crates without C++ support.
 
 We also don't validate if `verify_script` is false, but this is because the `Assume-Valid` process has already assessed the scripts as valid.
 

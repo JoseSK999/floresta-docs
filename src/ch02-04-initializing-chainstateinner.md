@@ -47,7 +47,7 @@ In `ChainState::new` we initialize `ChainStateInner` like so:
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 pub fn new(
-    chainstore: PersistedState,
+    mut chainstore: PersistedState,
     network: Network,
     assume_valid: AssumeValidArg,
 ) -> ChainState<PersistedState> {
@@ -55,10 +55,7 @@ pub fn new(
     # let genesis = genesis_block(&parameters);
     #
     # chainstore
-        # .save_header(&super::chainstore::DiskBlockHeader::FullyValid(
-            # genesis.header,
-            # 0,
-        # ))
+        # .save_header(&DiskBlockHeader::FullyValid(genesis.header, 0))
         # .expect("Error while saving genesis");
     #
     # chainstore

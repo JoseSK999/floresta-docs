@@ -104,7 +104,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
     self.state = State::SentVersion(Instant::now());
     loop {
         futures::select! {
-            request = tokio::time::timeout(Duration::from_secs(10), self.node_requests.recv()).fuse() => {
+            request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()).fuse() => {
                 match request {
                     Ok(None) => {
                         return Err(PeerError::Channel);
@@ -126,6 +126,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                         return Err(e);
                     }
                     Some(ReaderMessage::Block(block)) => {
+                        debug!("got a utreexo block from peer {}", self.id);
                         self.send_to_node(PeerMessages::Block(block)).await;
                     }
                     Some(ReaderMessage::Message(msg)) => {
@@ -143,7 +144,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
         # // If we send a ping and our peer doesn't respond in time, disconnect
         # if let Some(when) = self.last_ping {
             # if when.elapsed().as_secs() > PING_TIMEOUT {
-                # return Err(PeerError::Timeout);
+                # return Err(PeerError::PingTimeout);
             # }
         # }
         #
@@ -203,7 +204,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
     # self.state = State::SentVersion(Instant::now());
     # loop {
         # futures::select! {
-            # request = tokio::time::timeout(Duration::from_secs(10), self.node_requests.recv()).fuse() => {
+            # request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()).fuse() => {
                 # match request {
                     # Ok(None) => {
                         # return Err(PeerError::Channel);
@@ -225,6 +226,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                         # return Err(e);
                     # }
                     # Some(ReaderMessage::Block(block)) => {
+                        # debug!("got a utreexo block from peer {}", self.id);
                         # self.send_to_node(PeerMessages::Block(block)).await;
                     # }
                     # Some(ReaderMessage::Message(msg)) => {
@@ -241,7 +243,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
         // If we send a ping and our peer doesn't respond in time, disconnect
         if let Some(when) = self.last_ping {
             if when.elapsed().as_secs() > PING_TIMEOUT {
-                return Err(PeerError::Timeout);
+                return Err(PeerError::PingTimeout);
             }
         }
 
@@ -291,8 +293,8 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
 > ```rust
 > # // Path: floresta-wire/src/p2p_wire/peer.rs
 > #
-> const PING_TIMEOUT: u64 = 30;
-> const SEND_PING_TIMEOUT: u64 = 60;
+> const PING_TIMEOUT: u64 = 10 * 60;
+> const SEND_PING_TIMEOUT: u64 = 2 * 60;
 > ```
 
 ```rust
@@ -305,7 +307,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
     # self.state = State::SentVersion(Instant::now());
     # loop {
         # futures::select! {
-            # request = tokio::time::timeout(Duration::from_secs(10), self.node_requests.recv()).fuse() => {
+            # request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()).fuse() => {
                 # match request {
                     # Ok(None) => {
                         # return Err(PeerError::Channel);
@@ -327,6 +329,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                         # return Err(e);
                     # }
                     # Some(ReaderMessage::Block(block)) => {
+                        # debug!("got a utreexo block from peer {}", self.id);
                         # self.send_to_node(PeerMessages::Block(block)).await;
                     # }
                     # Some(ReaderMessage::Message(msg)) => {
@@ -343,7 +346,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
         # // If we send a ping and our peer doesn't respond in time, disconnect
         # if let Some(when) = self.last_ping {
             # if when.elapsed().as_secs() > PING_TIMEOUT {
-                # return Err(PeerError::Timeout);
+                # return Err(PeerError::PingTimeout);
             # }
         # }
         #

@@ -29,7 +29,7 @@ pub(crate) async fn maybe_open_connection(
 
     let connection_kind = ConnectionKind::Regular(required_service);
     if self.peers.len() < T::MAX_OUTGOING_PEERS {
-        self.create_connection(connection_kind).await;
+        self.create_connection(connection_kind).await?;
     }
 
     Ok(())
@@ -66,29 +66,37 @@ Extra connections extend the node’s reach by connecting to additional peers fo
 
 ### Create Connection
 
-`create_connection` gets required services for the connection kind, gets a peer address (prioritizing the fixed peer if specified), and ensures the peer isn’t already connected.
+`create_connection` takes the required services for the connection kind, gets a peer address (prioritizing the fixed peer if specified), and ensures the peer isn’t already connected.
 
-If no fixed peer is specified, we obtain a suitable peer address (or `LocalAddress`) for connection by calling `self.address_man.get_address_to_connect`. This method takes the required services and a boolean indicating whether a feeler connection is desired. We will explore this method in the next section.
+If no fixed peer is specified, we get a suitable peer address (or `LocalAddress`) for connection by calling `self.address_man.get_address_to_connect`. This method takes the required services and a boolean indicating whether a feeler connection is desired. We will explore this method in the next section.
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub(crate) async fn create_connection(&mut self, kind: ConnectionKind) -> Option<()> {
+pub(crate) async fn create_connection(
+    &mut self,
+    kind: ConnectionKind,
+) -> Result<(), WireError> {
     let required_services = match kind {
         ConnectionKind::Feeler => ServiceFlags::NONE,
         ConnectionKind::Regular(services) => services,
         ConnectionKind::Extra => ServiceFlags::NONE,
     };
 
-    let address = match &self.fixed_peer {
-        Some(address) => Some((0, address.clone())),
-        None => self
-            .address_man
-            .get_address_to_connect(required_services, matches!(kind, ConnectionKind::Feeler)),
-    };
+    let (peer_id, address) = self
+        .fixed_peer
+        .as_ref()
+        .map(|addr| (0, addr.clone()))
+        .or_else(|| {
+            self.address_man.get_address_to_connect(
+                required_services,
+                matches!(kind, ConnectionKind::Feeler),
+            )
+        })
+        .ok_or(WireError::NoAddressesAvailable)?;
 
     # debug!("attempting connection with address={address:?} kind={kind:?}",);
-    let (peer_id, address) = address?;
+    #
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -99,25 +107,32 @@ pub(crate) async fn create_connection(&mut self, kind: ConnectionKind) -> Option
         .update_set_state(peer_id, AddressState::Failed(now));
 
     // Don't connect to the same peer twice
-    if self
-        .common
-        .peers
-        .iter()
-        .any(|peers| peers.1.address == address.get_net_address())
-    {
-        return None;
+    let is_connected = |(_, peer_addr): (_, &LocalPeerView)| {
+        peer_addr.address == address.get_net_address() && peer_addr.port == address.get_port()
+    };
+
+    if self.common.peers.iter().any(is_connected) {
+        return Err(WireError::PeerAlreadyExists(
+            address.get_net_address(),
+            address.get_port(),
+        ));
     }
 
-    // Default to transport V1. Will be updated after the P2P transport negotiation.
-    self.open_connection(kind, peer_id, address, TransportProtocol::V1)
-        .await
-        .ok()?;
+    // We allow V1 fallback only if the cli option was set, it's a --connect peer
+    // or if we are connecting to a utreexo peer, since utreexod doesn't support V2 yet.
+    let is_fixed = self.fixed_peer.is_some();
+    let allow_v1 = self.config.allow_v1_fallback
+        || kind == ConnectionKind::Regular(UTREEXO.into())
+        || is_fixed;
 
-    Some(())
+    self.open_connection(kind, peer_id, address, allow_v1)
+        .await?;
+
+    Ok(())
 }
 ```
 
-Then we use the obtained `LocalAddress` and the peer identifier as arguments for `open_connection`, as well as the connection kind.
+Then we use the obtained `LocalAddress` and the peer identifier as arguments for `open_connection`, as well as the connection kind and whether we should fall back to the V1 P2P protocol if the V2 handshake fails.
 
 Both the `LocalAddress` type and the `get_address_to_connect` method are implemented in the address manager module (_p2p_wire/address_man.rs_) that we will see in the next section.
 
@@ -135,7 +150,7 @@ pub(crate) async fn open_connection(
     kind: ConnectionKind,
     peer_id: usize,
     address: LocalAddress,
-    transport_protocol: TransportProtocol,
+    allow_v1_fallback: bool,
 ) -> Result<(), WireError> {
     let (requests_tx, requests_rx) = unbounded_channel();
     if let Some(ref proxy) = self.socks5 {
@@ -153,7 +168,7 @@ pub(crate) async fn open_connection(
                 # requests_rx,
                 # self.peer_id_count,
                 # self.config.user_agent.clone(),
-                # self.config.allow_v1_fallback,
+                # allow_v1_fallback,
             ),
         ));
     } else {
@@ -170,7 +185,7 @@ pub(crate) async fn open_connection(
                 # self.network,
                 # self.node_tx.clone(),
                 # self.config.user_agent.clone(),
-                # self.config.allow_v1_fallback,
+                # allow_v1_fallback,
             ),
         ));
     }
@@ -197,7 +212,8 @@ pub(crate) async fn open_connection(
             # address_id: peer_id as u32,
             # height: 0,
             # banscore: 0,
-            # transport_protocol,
+            # // Will be downgraded to V1 if the V2 handshake fails, and we allow fallback
+            # transport_protocol: TransportProtocol::V2,
         },
     );
 

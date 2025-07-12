@@ -34,7 +34,7 @@ pub(crate) async fn open_non_proxy_connection(
     let (transport_reader, transport_writer, transport_protocol) =
         transport::connect(address, network, allow_v1_fallback).await?;
 
-    let (cancellation_sender, cancellation_receiver) = tokio::sync::oneshot::channel();
+    let (cancellation_sender, cancellation_receiver) = oneshot::channel();
     let (actor_receiver, actor) = create_actors(transport_reader);
     tokio::spawn(async move {
         tokio::select! {
@@ -101,7 +101,7 @@ pub(crate) async fn open_proxy_connection(
     let (transport_reader, transport_writer, transport_protocol) =
         transport::connect_proxy(proxy, address, network, allow_v1_fallback).await?;
 
-    let (cancellation_sender, cancellation_receiver) = tokio::sync::oneshot::channel();
+    let (cancellation_sender, cancellation_receiver) = oneshot::channel();
     let (actor_receiver, actor) = create_actors(transport_reader);
     tokio::spawn(async move {
         tokio::select! {

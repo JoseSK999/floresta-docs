@@ -1,6 +1,6 @@
 # Introduction
 
-Floresta is a collection of Rust Bitcoin libraries designed for building a full node, alongside a default node implementation, all developed by Davidson Souza.
+Floresta is a collection of Rust libraries designed for building a Bitcoin full node, alongside the assembled daemon and RPC client binaries, all developed by Davidson Souza.
 
 A key feature of Floresta is its use of the [utreexo accumulator](https://eprint.iacr.org/2019/611) to maintain the UTXO set in a highly compact format. It also incorporates innovative techniques to significantly reduce Initial Block Download (IBD) times with minimal security tradeoffs.
 

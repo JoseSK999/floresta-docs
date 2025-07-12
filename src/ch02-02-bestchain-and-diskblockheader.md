@@ -32,8 +32,9 @@ Also, we have `AssumeValid` for a configuration that allows the node to skip scr
 ### BestChain
 
 The `BestChain` struct is an internal representation of the chain we are in and has the following fields:
+
 - `best_block`: The current best chain's last `BlockHash` (the actual block may or may not have been validated yet).
-- `depth`: The number of blocks pilled after the genesis block (i.e. the height of the tip).
+- `depth`: The number of blocks pilled after the genesis block (i.e., the height of the tip).
 - `validation_index`: The `BlockHash` up to which we have validated the chain.
 - `alternative_tips`: A vector of fork tip `BlockHash`es with a chance of becoming the best chain.
 - `assume_valid_index`: Height occupied by the assume valid block (up to which we don't validate scripts).

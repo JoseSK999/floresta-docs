@@ -58,6 +58,10 @@ pub trait NodeContext {
     const SEND_ADDRESSES_INTERVAL: u64 = 60 * 60; // 1 hour
     # /// How long should we wait for a peer to respond our connection request
     const CONNECTION_TIMEOUT: u64 = 30; // 30 seconds
+    # /// How many blocks we can ask in the same request
+    const BLOCKS_PER_GETDATA: usize = 4;
+    # /// How many concurrent GETDATA packages we can send at the same time
+    const MAX_CONCURRENT_GETDATA: usize = 2;
 
     fn get_required_services(&self) -> ServiceFlags {
         ServiceFlags::NETWORK

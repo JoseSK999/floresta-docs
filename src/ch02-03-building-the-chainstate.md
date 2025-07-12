@@ -22,7 +22,7 @@ The builder for `ChainState` has this signature:
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 pub fn new(
-    chainstore: PersistedState,
+    mut chainstore: PersistedState,
     network: Network,
     assume_valid: AssumeValidArg,
 ) -> ChainState<PersistedState> {
@@ -64,7 +64,7 @@ The first part of the body of `ChainState::new` (let's omit the `impl` block fro
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 pub fn new(
-    chainstore: PersistedState,
+    mut chainstore: PersistedState,
     network: Network,
     assume_valid: AssumeValidArg,
 ) -> ChainState<PersistedState> {
@@ -72,10 +72,7 @@ pub fn new(
     let genesis = genesis_block(&parameters);
 
     chainstore
-        .save_header(&super::chainstore::DiskBlockHeader::FullyValid(
-            genesis.header,
-            0,
-        ))
+        .save_header(&DiskBlockHeader::FullyValid(genesis.header, 0))
         .expect("Error while saving genesis");
 
     chainstore
@@ -129,16 +126,16 @@ pub fn get_assume_valid(
         AssumeValidArg::UserInput(hash) => Ok(Some(hash)),
         AssumeValidArg::Hardcoded => match network {
             Network::Bitcoin => Ok(Some(bhash!(
-                "00000000000000000000569f4d863c27e667cbee8acc8da195e7e5551658e6e9"
+                "00000000000000000001ff36aef3a0454cf48887edefa3aab1f91c6e67fee294"
             ))),
             Network::Testnet => Ok(Some(bhash!(
-                "000000000000001142ad197bff16a1393290fca09e4ca904dd89e7ae98a90fcd"
+                "000000007df22db38949c61ceb3d893b26db65e8341611150e7d0a9cd46be927"
             ))),
             Network::Testnet4 => Ok(Some(bhash!(
-                "0000000006af13c1117f3e2eb14f10eb9736e255713118cf7eb6659b1448efc1"
+                "0000000000335c2895f02ebc75773d2ca86095325becb51773ce5151e9bcf4e0"
             ))),
             Network::Signet => Ok(Some(bhash!(
-                "0000003ed17b9c93954daab00d73ccbd0092074c4ebfc751c7458d58b827dfea"
+                "000000084ece77f20a0b6a7dda9163f4527fd96d59f7941fb8452b3cec855c2e"
             ))),
             Network::Regtest => Ok(Some(bhash!(
                 "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"

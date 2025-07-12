@@ -25,9 +25,7 @@ fn maybe_reorg(&self, branch_tip: BlockHeader) -> Result<(), BlockchainError> {
     self.push_alt_tip(&branch_tip)?;
 
     let parent_height = self.get_ancestor(&branch_tip)?.try_height()?;
-    read_lock!(self)
-        .chainstore
-        .save_header(&DiskBlockHeader::InFork(branch_tip, parent_height + 1))?;
+    self.update_header(&DiskBlockHeader::InFork(branch_tip, parent_height + 1))?;
 
     Ok(())
 }
@@ -57,19 +55,21 @@ fn reorg(&self, new_tip: BlockHeader) -> Result<(), BlockchainError> {
 
     let validation_index = self.get_last_valid_block(&new_tip)?;
     let depth = self.get_chain_depth(&new_tip)?;
+
     self.change_active_chain(&new_tip, validation_index, depth);
+    self.reorg_acc(&fork_point)?;
 
     Ok(())
 }
 ```
 
-We use `mark_chain_as_inactive` and `mark_chain_as_active` to update the disk data (i.e. marking the previous `InFork` headers as `HeadersOnly` and vice versa, and linking the height indexes to the new branch block hashes).
+We use `mark_chain_as_inactive` and `mark_chain_as_active` to update the disk data (i.e., marking the previous `InFork` headers as `HeadersOnly` and vice versa, and linking the height indexes to the new branch block hashes).
 
 Then we invoke `get_last_valid_block` and `get_chain_depth` to obtain said data from a branch, provided the branch header tip.
 
 > Note that we don't validate forks unless they become the best chain, so in this case the last validated block is the last common block between the two branches.
 
-With this data we call `change_active_chain` to update the `best_block` field. It also re-initializes the accumulator as we will need to _fetch the utreexo roots for the last common block_ to proceed with the new branch validation.
+With this data we call `change_active_chain` to update the `best_block` field. We also call `reorg_acc` to roll back to the saved accumulator for the new last validated block, which is needed to proceed with the new branch validation.
 
 ```rust
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
@@ -79,6 +79,5 @@ fn change_active_chain(&self, new_tip: &BlockHeader, last_valid: BlockHash, dept
     inner.best_block.best_block = new_tip.block_hash();
     inner.best_block.validation_index = last_valid;
     inner.best_block.depth = depth;
-    inner.acc = Stump::new();
 }
 ```

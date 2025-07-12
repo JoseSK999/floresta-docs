@@ -106,14 +106,14 @@ Then, we call `UpdatableChainstate::flush` _every 100,000 blocks during IBD_ or 
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 fn flush(&self) -> Result<(), BlockchainError> {
-    self.save_acc()?;
-    let inner = read_lock!(self);
-    inner.chainstore.save_height(&inner.best_block)?;
+    let mut inner = write_lock!(self);
+    let best_block = inner.best_block.clone();
+
+    inner.chainstore.save_height(&best_block)?;
     inner.chainstore.flush()?;
+
     Ok(())
 }
 ```
-
-> Note that this is the only time we persist the roots and height (best chain data), and it is the only time we persist the headers and index data if we use `KvChainStore` as store.
 
 Last of all, we `notify` the new validated block to subscribers.

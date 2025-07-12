@@ -2,13 +2,12 @@
 
 The full `accept_header` method implementation for `ChainState` is below. To get read or write access to the `ChainStateInner` we use two macros, `read_lock` and `write_lock`.
 
-In short, the method takes a `bitcoin::block::Header` (type alias `BlockHeader`) and accepts it on top of our chain of headers, or maybe reorgs if it's extending a better chain (i.e. switching to the new better chain). If there's an error it returns `BlockchainError`, which we mentioned in [The UpdatableChainstate Trait](ch01-02-chain-backend-api.md#the-updatablechainstate-trait) subsection from Chapter 1.
+In short, the method takes a `bitcoin::block::Header` (type alias `BlockHeader`) and accepts it on top of our header chain, or maybe reorgs if it's extending a better chain (i.e., switching to the new better chain). If there's an error it returns `BlockchainError`, which we mentioned in [The UpdatableChainstate Trait](ch01-02-chain-backend-api.md#the-updatablechainstate-trait) subsection from Chapter 1.
 
 ```rust
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
 fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
-    debug!("Accepting header {header:?}");
     let disk_header = self.get_disk_block_header(&header.block_hash());
 
     match disk_header {
@@ -36,15 +35,10 @@ fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
         let height = best_block.0 + 1;
         debug!("Header builds on top of our best chain");
 
-        let mut inner = write_lock!(self);
-        inner.best_block.new_block(block_hash, height);
-        inner
-            .chainstore
-            .save_header(&super::chainstore::DiskBlockHeader::HeadersOnly(
-                header, height,
-            ))?;
+        write_lock!(self).best_block.new_block(block_hash, height);
+        let disk_header = DiskBlockHeader::HeadersOnly(header, height);
 
-        inner.chainstore.update_block_index(height, block_hash)?;
+        self.update_header_and_index(&disk_header, block_hash, height)?;
     } else {
         debug!("Header not in the best chain");
         self.maybe_reorg(header)?;
@@ -70,7 +64,7 @@ If we don't have the header, then we get the best block hash and height (with `B
 
 - If the new header extends the previous best block:
     1. We update the `best_block` field, adding the new block hash and height.
-    2. Then we call `save_header` and `update_block_index` to update the database (or the `HashMap` caches if we use `KvChainStore`).
+    2. Then we call `save_header` and `update_block_index` to update the database, via the `update_header_and_index` helper.
 - If the header doesn't extend the current best chain, we may [reorg](ch03-02-reorging-the-chain.md) if it extends a better chain.
 
 ### Reindexing
@@ -113,6 +107,7 @@ The `validate_header` method takes a `BlockHeader` and performs the following ch
 #### Check the PoW
 
 - Use the `get_next_required_work` method to compute the expected PoW target and compare it with the header's actual target. If the actual target is easier, return `BlockchainError::BlockValidation`.
+- Check the special [BIP 94](https://github.com/bitcoin/bips/blob/master/bip-0094.mediawiki) rules for the Testnet 4 network.
 - Verify the PoW against the target using a `bitcoin` method. If verification fails, return `BlockchainError::BlockValidation`.
 
 ```rust
@@ -127,12 +122,14 @@ fn validate_header(&self, block_header: &BlockHeader) -> Result<BlockHash, Block
     // ...
 
     // Check pow
-    let expected_target = self.get_next_required_work(&prev_block, height, block_header);
+    let expected_target = self.get_next_required_work(&prev_block, height, block_header)?;
 
     let actual_target = block_header.target();
     if actual_target > expected_target {
         return Err(BlockValidationErrors::NotEnoughPow)?;
     }
+
+    self.check_bip94_block(block_header, height)?;
 
     let block_hash = block_header
         .validate_pow(actual_target)
