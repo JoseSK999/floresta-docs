@@ -103,8 +103,8 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
     self.write(version).await?;
     self.state = State::SentVersion(Instant::now());
     loop {
-        futures::select! {
-            request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()).fuse() => {
+        tokio::select! {
+            request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()) => {
                 match request {
                     Ok(None) => {
                         return Err(PeerError::Channel);
@@ -117,7 +117,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                     }
                 }
             },
-            message = self.actor_receiver.recv().fuse() => {
+            message = self.actor_receiver.recv() => {
                 match message {
                     None => {
                         return Err(PeerError::Channel);
@@ -203,8 +203,8 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
     # self.write(version).await?;
     # self.state = State::SentVersion(Instant::now());
     # loop {
-        # futures::select! {
-            # request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()).fuse() => {
+        # tokio::select! {
+            # request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()) => {
                 # match request {
                     # Ok(None) => {
                         # return Err(PeerError::Channel);
@@ -217,7 +217,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                     # }
                 # }
             # },
-            # message = self.actor_receiver.recv().fuse() => {
+            # message = self.actor_receiver.recv() => {
                 # match message {
                     # None => {
                         # return Err(PeerError::Channel);
@@ -306,8 +306,8 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
     # self.write(version).await?;
     # self.state = State::SentVersion(Instant::now());
     # loop {
-        # futures::select! {
-            # request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()).fuse() => {
+        # tokio::select! {
+            # request = tokio::time::timeout(Duration::from_secs(2), self.node_requests.recv()) => {
                 # match request {
                     # Ok(None) => {
                         # return Err(PeerError::Channel);
@@ -320,7 +320,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                     # }
                 # }
             # },
-            # message = self.actor_receiver.recv().fuse() => {
+            # message = self.actor_receiver.recv() => {
                 # match message {
                     # None => {
                         # return Err(PeerError::Channel);
