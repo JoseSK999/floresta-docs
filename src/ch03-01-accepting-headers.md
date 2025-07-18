@@ -18,7 +18,7 @@ fn accept_header(&self, header: BlockHeader) -> Result<(), BlockchainError> {
         }
         Ok(found) => {
             // Possibly reindex to recompute the best_block field
-            self.maybe_reindex(&found);
+            self.maybe_reindex(&found)?;
             // We already have this header
             return Ok(());
         }
@@ -69,32 +69,29 @@ If we don't have the header, then we get the best block hash and height (with `B
 
 ### Reindexing
 
-During IBD, headers arrive rapidly, making it pointless to write the `BestChain` data to disk for every new header. Instead, we update the `ChainStateInner.best_block` field and only persist it occasionally, avoiding redundant writes that would instantly be overridden.
+During IBD, headers arrive rapidly, making it pointless to write the `BestChain` data to disk for every new header. Instead, we update the `ChainStateInner.best_block` field and only persist it occasionally, avoiding redundant writes that would be instantly overridden.
 
 But there is a possibility that the node _is shut down or crashes_ before `save_height` is called (or before the pending write is completed) and after the headers have been written to disk. In this case we can recompute the last `BestChain` data by going through the headers on disk. This recovery process is handled by the `reindex_chain` method within `maybe_reindex`.
 
 ```rust
 # // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
 #
-fn maybe_reindex(&self, potential_tip: &DiskBlockHeader) {
-
+fn maybe_reindex(&self, potential_tip: &DiskBlockHeader) -> Result<(), BlockchainError> {
     // Check if the disk header is an unvalidated block in the best chain
     if let DiskBlockHeader::HeadersOnly(_, height) = potential_tip {
-        let best_height = self
-            .get_best_block()
-            .expect("infallible: in-memory BestChain is initialized")
-            .0;
+        let best_height = self.get_best_block()?.0;
 
         // If the best chain height is lower, it needs to be updated
         if *height > best_height {
-            let best_chain = self.reindex_chain();
-            write_lock!(self).best_block = best_chain;
+            self.reindex_chain()?;
         }
     }
+
+    Ok(())
 }
 ```
 
-We call `reindex_chain` if _disk header's height > best_block's height_, as it means that `best_block` is not up-to-date with the headers on disk.
+We call `reindex_chain` if _disk header's height > best_block's height_, as it means that `best_block` is not up to date with the headers on disk.
 
 ### Validate Header
 

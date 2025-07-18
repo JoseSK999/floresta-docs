@@ -31,10 +31,10 @@ With this data we have a pruned view of the blockchain, metadata about the chain
 
 `ChainStore` also has an associated `Error` type for the methods:
 
-Filename: pruned_utreexo/mod.rs
+Filename: pruned_utreexo/chainstore.rs
 
 ```rust
-# // Path: floresta-chain/src/pruned_utreexo/mod.rs
+# // Path: floresta-chain/src/pruned_utreexo/chainstore.rs
 #
 pub trait ChainStore {
     type Error: DatabaseError;
