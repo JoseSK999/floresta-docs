@@ -12,7 +12,7 @@ This is the struct that holds the meat of the matter (or should we say the root 
 - `consensus`: Parameters for the chain validation, as a `Consensus` struct (a Floresta type that will be explained in detail in [Chapter 4](ch04-00-consensus-and-bitcoinconsensus.md)).
 - `assume_valid`: As an `Option<BlockHash>`.
 
-Note that the accumulator and the best block data are kept in our `ChainStore`, but we cache them in `ChainStateInner` for faster access, avoiding potential disk reads and deserializations (e.g. loading them from the `meta` bucket if we use `KvChainStore`).
+Note that the accumulator and the best block data are kept in our `ChainStore`, but we cache them in `ChainStateInner` for faster access, avoiding potential disk reads and deserializations (e.g., loading them from the `meta` bucket if we use `KvChainStore`).
 
 Let's next see how these fields are accessed with an example.
 
@@ -93,7 +93,7 @@ The TLDR is that we move `chainstore` to the `ChainStateInner`, initialize the a
 
 ## Recap
 
-In this chapter we have understood the structure of `ChainState`, a type implementing `UpdatableChainstate + BlockchainInterface` (i.e. a blockchain backend). This type required a `ChainStore` implementation, expected to save state data to disk, and we examined the provided `KvChainStore`.
+In this chapter we have understood the structure of `ChainState`, a type implementing `UpdatableChainstate + BlockchainInterface`; a blockchain backend. This type required a `ChainStore` implementation, expected to save state data to disk, and we examined the provided `KvChainStore`.
 
 Finally, we have seen the `ChainStateInner` struct, which keeps track of the `ChainStore` and more data.
 

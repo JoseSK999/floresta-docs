@@ -2,7 +2,7 @@
 
 In the previous chapter, we learned how `UtreexoNode` opens connections, although we didn't dive into the low-level networking details. We mentioned that each peer connection is handled by the `Peer` type, keeping the peer networking logic separate from `UtreexoNode`.
 
-In this chapter, we will explore the details of `Peer` operations, beginning with the low-level logic for opening connections (i.e. `Peer` creation).
+In this chapter, we will explore the details of `Peer` operations, beginning with the low-level logic for opening connections (that is, the `Peer` creation).
 
 ## Peer Creation
 
@@ -65,7 +65,7 @@ pub(crate) async fn open_non_proxy_connection(
 
 This actor is obtained via the `create_actors` function, implemented in _p2p_wire/peer.rs_, and is of type `MessageActor`. **The actor is spawned as a separate asynchronous task**, ensuring it runs independently to handle incoming data.
 
-Very importantly, the actor for a peer must be closed when the connection finalizes, and this is why we have an additional one-time-use channel, used by the `Peer` type to send a cancellation signal (i.e. "_Peer connection is closed, so we don't need to listen to the peer anymore_"). The `tokio::select` macro ensures that the async actor task is dropped whenever a cancellation signal is received from `Peer`.
+Very importantly, the actor for a peer must be closed when the connection finalizes, and this is why we have an additional one-time-use channel, used by the `Peer` type to send a cancellation signal (essentially saying "_the peer connection is closed, so there’s nothing left to listen to_"). The `tokio::select` macro ensures that the async actor task is dropped whenever a cancellation signal is received from `Peer`.
 
 Finally, the `Peer` instance is created using the `Peer::create_peer` function. The communication channels (internal and over the P2P network) that the `Peer` uses are:
 

@@ -408,7 +408,7 @@ enum State {
 
 `None` is the initial state when the `Peer` is created, but shortly after that it will be updated with `SentVersion`, when we initiate the handshake by sending our `NetworkMessage::Version`.
 
-If the peer is responsive, we will hear back from her within the next 10 seconds, via her `NetworkMessage::Version`, which will be handled by the `handle_peer_message` (that we saw in the third step). This method will internally save data from the peer, send her a `NetworkMessage::Verack` (i.e. the acknowledgment of her message), and update the state to `SentVerack`.
+If the peer is responsive, we will hear back from her within the next 10 seconds, via her `NetworkMessage::Version`, which will be handled by the `handle_peer_message` (that we saw in the third step). This method will internally save data from the peer, send her a `NetworkMessage::Verack` (i.e., the acknowledgment of her message), and update the state to `SentVerack`.
 
 Finally, when we receive the `NetworkMessage::Verack` from the peer, we can switch to the `Connected` state, and communicate the new peer data with `UtreexoNode`.
 

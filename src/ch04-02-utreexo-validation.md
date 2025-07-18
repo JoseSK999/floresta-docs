@@ -2,7 +2,7 @@
 
 In the previous section we have seen the `Consensus::verify_block_transactions` function. It was taking a `utxos` argument, used to verify that each transaction input _satisfies the script_ of the UTXO it spends, and that transactions _spend no more than the sum of input amounts_.
 
-However, we have yet to **verify that these `utxos` actually exist in the UTXO set**, i.e. check that nobody is spending coins out of thin air. That's what we are going to do inside `Consensus::update_acc`, and get the updated UTXO set accumulator, with spent UTXOs removed and new ones added.
+However, we have yet to **verify that these `utxos` actually exist in the UTXO set**, i.e., check that nobody is spending coins out of thin air. That's what we are going to do inside `Consensus::update_acc`, and get the updated UTXO set accumulator, with spent UTXOs removed and new ones added.
 
 > Recall that `Stump` is the type of our accumulator, coming from the `rustreexo` crate. `Stump` represents the merkle roots of a forest where leaves are UTXO hashes.
 

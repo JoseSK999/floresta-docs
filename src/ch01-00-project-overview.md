@@ -1,6 +1,6 @@
 # Project Overview
 
-The Floresta project is made up of a few library crates, providing modular node components, and the `florestad` binary (i.e. Floresta daemon), assembling components for a full node.
+The Floresta project is made up of a few library crates, providing modular node and application components, and two binaries: `florestad`, the Floresta daemon (i.e., the assembled node implementation), and `floresta-cli`, the command-line interface for `florestad`.
 
 Developers can use the core components in the libraries to build their own wallets and node implementations. They can use individual libraries or use the whole pack of components with the `floresta` meta-crate, which just re-exports libraries.
 
@@ -8,7 +8,7 @@ The libraries in Floresta are:
 - `floresta-chain`
   - Validates the blockchain and tracks the state.
 - `floresta-cli`
-  - Provides command-line interface tools to interact with `florestad`.
+  - Provides command-line interface tools and the RPC API to interact with `florestad`.
 - `floresta-common`
   - Contains shared data structures and traits used across other crates.
 - `floresta-compact-filters`

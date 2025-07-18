@@ -16,7 +16,7 @@ The ultimate vision for Floresta is to deliver a reliable and ultra-lightweight 
 
 This documentation provides an overview of the process involved in creating and running a Floresta node (i.e., a `UtreexoNode`). We start by examining the project's overall structure, which is necessary to build a foundation for understanding its internal workings.
 
-The book will contain plenty of code snippets, which are identical to Floresta code sections. Each snippet includes a commented path referencing its corresponding file, visible by clicking the _eye icon_ in the top-right corner of the snippet (e.g. `// Path: floresta-chain/src/lib.rs`).
+The book will contain plenty of code snippets, which are identical to Floresta code sections. Each snippet includes a commented path referencing its corresponding file, visible by clicking the _eye icon_ in the top-right corner of the snippet (e.g., `// Path: floresta-chain/src/lib.rs`).
 
 You will also find some interactive quizzes to test and reinforce your understanding of Floresta!
 

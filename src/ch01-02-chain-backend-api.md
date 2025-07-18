@@ -23,9 +23,9 @@ The list of required methods:
 - `is_in_ibd`, whether we are in Initial Block Download (IBD) or not.
 - `get_unbroadcasted` transactions.
 - `is_coinbase_mature`, given its block hash and height (on the mainchain, coinbase transactions mature after 100 blocks).
-- `get_block_locator`, i.e. a compact list of block hashes used to efficiently identify the most recent common point in the blockchain between two nodes for synchronization purposes.
+- `get_block_locator`, i.e., a compact list of block hashes used to efficiently identify the most recent common point in the blockchain between two nodes for synchronization purposes.
 - `get_block_locator_for_tip`, given the hash of the tip block. This can be used for tips that are not canonical or best.
-- `get_validation_index`, i.e. the height of the last block we have validated.
+- `get_validation_index`, i.e., the height of the last block we have validated.
 - `get_block_height`, given its block hash.
 - `get_chain_tips` block hashes, including the best tip and non-canonical ones.
 - `get_fork_point`, to get the block hash where a given branch forks (the branch is represented by its tip block hash).
@@ -174,7 +174,7 @@ pub trait UpdatableChainstate {
 }
 ```
 
-> Usually, in IBD we **fetch a chain of headers with sufficient PoW first**, and only then do we ask for the block data (i.e. the transactions) in order to verify the blocks. This way we ensure that DoS attacks sending our node invalid blocks, with the purpose of wasting our resources, are costly because of the required PoW.
+> Usually, in IBD we **fetch a chain of headers with sufficient PoW first**, and only then do we ask for the block data (i.e., the transactions) in order to verify the blocks. This way we ensure that DoS attacks sending our node invalid blocks, with the purpose of wasting our resources, are costly because of the required PoW.
 
 #### Others
 - `switch_chain`: Reorg to another branch, given its tip block hash.
