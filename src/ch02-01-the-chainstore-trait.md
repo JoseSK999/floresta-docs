@@ -16,7 +16,7 @@ The methods required by `ChainStore`, designed for interaction with persistent s
 
 In other words, the implementation of these methods should allow us to save and load:
 
-- The current accumulator (serialized as a `Vec<u8>`).
+- The accumulator for each block (serialized as a `Vec<u8>`), such that we can reorg our UTXO set if a fork becomes the best chain.
 - The current chain tip data (as `BestChain`).
 - Block headers (as `DiskBlockHeader`), associated to the block hash.
 - Block hashes (as `BlockHash`), associated with a height.
@@ -65,6 +65,28 @@ pub trait ChainStore {
 
 Hence, implementations of `ChainStore` are free to use any error type as long as it implements `DatabaseError`. This is just a marker trait that can be automatically implemented on any `T: std::error::Error + std::fmt::Display`. This flexibility allows compatibility with different database implementations.
 
-And that's all for this section! Next we will see two important types whose data is saved in the `ChainStore`: `BestChain` and `DiskBlockHeader`.
+Now, let's do a brief overview of the two provided `ChainStore` implementations.
+
+### FlatChainStore and KvChainStore
+
+Floresta currently offers two `ChainStore` implementations. The first available implementation, and by far the simplest one, is `KvChainStore`, which wraps the [`kv`](https://crates.io/crates/kv) crate (itself a thin layer over **sled**) to provide a [key-value](https://en.wikipedia.org/wiki/Key%E2%80%93value_database) embedded database store.
+
+The second one is `FlatChainStore`, which replaced `KvChainStore` as the default store. Nowadays, `florestad` will compile by default with this store, but you can still use the old `KvChainStore` if you compile it with `--no-default-features --features kv-chainstore`. However, `FlatChainStore` was designed to deliver optimal performance, especially on low-resource devices like smartphones.
+
+Instead of using key-value buckets, `FlatChainStore` keeps all the data in raw `.bin` files. Then, we create a [memory-map](https://en.wikipedia.org/wiki/Memory-mapped_file) that allows us to read and write to these files as if they were in memory. Once initialized, it has the following directory structure:
+
+```rust
+chaindata/
+  ├─ headers.bin        # mmap‑ed header vector
+  ├─ fork_headers.bin   # mmap‑ed header vector for fork chains
+  ├─ blocks_index.bin   # mmap‑ed vector<u32>, accessed via a hash‑map linking block hashes to heights
+  │
+  ├─ accumulators.bin   # plain file (roots blob, var‑len records)
+  └─ metadata.bin       # mmap‑ed Metadata struct (version, checksums, file lengths...)
+```
+
+For more detailed information about `FlatChainStore`, see [Apendix A](appendix-01-flat-chainstore.md).
+
+And that's all for this section! Next we will see two important types used to store and retrieve data via the `ChainStore` methods: `BestChain` and `DiskBlockHeader`.
 
 {{#quiz ../quizzes/ch02-01-the-chainstore-trait.toml}}

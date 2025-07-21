@@ -34,3 +34,6 @@
 - [Peer-to-Peer Networking](ch07-00-peer-to-peer-networking.md)
   - [Reading and Writing Messages](ch07-01-reading-and-writing-messages.md)
   - [Handling Peer Messages](ch07-02-handling-peer-messages.md)
+
+- [Appendix](appendix-00.md)
+  - [A - FlatChainStore Architecture](appendix-01-flat-chainstore.md)
