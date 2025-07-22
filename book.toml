@@ -17,7 +17,10 @@ level = 1
 
 [output.linkcheck]
 follow-web-links = true
-# ignore only the bitcoin/bips mediawiki pages
-exclude = [ 'github\.com/bitcoin/bips/blob/master/bip-.*\.mediawiki' ]
+
+[output.linkcheck.http-headers]
+# some sites return 404 on HEAD unless we explicitly ask for HTML
+'crates\.io' = ["Accept: text/html"]
+'github\.com/bitcoin/bips/blob/master/bip-.*\.mediawiki' = ["Accept: text/html"]
 
 [preprocessor.quiz]
