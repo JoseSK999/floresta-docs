@@ -173,6 +173,6 @@ Below we calculate the worst case size scenario that we could reach in a few dec
 | `accumulators.bin` | 1×(roots blob and a `u64` leaves count) each 32 blocks | **80MiB** (2.5M / 32 × 1032B) | Assumes a mean of 32 roots (absolute worst case is 64 roots) *and* keeping one accumulator each 32 blocks. |
 | `fork_headers.bin` | 1×`HashedDiskHeader`/fork block                        | **2MiB** (16k × 128B)         | Plenty of room for fork headers storage; we can prune fork headers that are deep enough.                   |
 
-**Real‑world footprint as of July 2025**: **177MiB**.
+**Real‑world footprint as of July 2025**, with most accumulators pruned: **177MiB**.
 
 > **Bottom‑line:** The worst case for the next few decades is around 442MiB, meaning we can assume less than 500MiB for the foreseeable future – well below the RAM of any budget laptop.
