@@ -131,7 +131,6 @@ impl ChainParams {
             # },
         # }
     # }
-}
 ```
 
 If you click _see more_, you will notice we have 17 utreexo roots there, and this is the accumulator for more than 2 billion UTXOs!

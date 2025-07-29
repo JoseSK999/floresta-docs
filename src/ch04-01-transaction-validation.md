@@ -34,7 +34,10 @@ pub fn validate_block_no_acc(
     # let verify_script = self.verify_script(height)?;
     // ...
     #[cfg(feature = "bitcoinconsensus")]
-    let flags = self.get_validation_flags(height, block.block_hash());
+    let flags = read_lock!(self)
+        .consensus
+        .parameters
+        .get_validation_flags(height, block.block_hash());
     #[cfg(not(feature = "bitcoinconsensus"))]
     let flags = 0;
     Consensus::verify_block_transactions(
@@ -54,14 +57,14 @@ pub fn validate_block_no_acc(
 The validation flags were returned by `get_validation_flags` based on the current height and block hash, and they are of type `core::ffi::c_uint`: a foreign function interface type used for the C++ bindings.
 
 ```rust
-# // Path: floresta-chain/src/pruned_utreexo/chain_state.rs
+# // Path: floresta-chain/src/pruned_utreexo/chainparams.rs
 #
-// Omitted: impl<PersistedState: ChainStore> ChainState<PersistedState> {
+// Omitted: impl ChainParams {
 
-fn get_validation_flags(&self, height: u32, hash: BlockHash) -> c_uint {
-    let chain_params = &read_lock!(self).consensus.parameters;
-
-    if let Some(flag) = chain_params.exceptions.get(&hash) {
+#[cfg(feature = "bitcoinconsensus")]
+/// Returns the validation flags for a given block hash and height
+pub fn get_validation_flags(&self, height: u32, hash: BlockHash) -> c_uint {
+    if let Some(flag) = self.exceptions.get(&hash) {
         return *flag;
     }
 
@@ -76,16 +79,16 @@ fn get_validation_flags(&self, height: u32, hash: BlockHash) -> c_uint {
     // violating blocks.
     let mut flags = bitcoinconsensus::VERIFY_P2SH | bitcoinconsensus::VERIFY_WITNESS;
 
-    if height >= chain_params.params.bip65_height {
+    if height >= self.params.bip65_height {
         flags |= bitcoinconsensus::VERIFY_CHECKLOCKTIMEVERIFY;
     }
-    if height >= chain_params.params.bip66_height {
+    if height >= self.params.bip66_height {
         flags |= bitcoinconsensus::VERIFY_DERSIG;
     }
-    if height >= chain_params.csv_activation_height {
+    if height >= self.csv_activation_height {
         flags |= bitcoinconsensus::VERIFY_CHECKSEQUENCEVERIFY;
     }
-    if height >= chain_params.segwit_activation_height {
+    if height >= self.segwit_activation_height {
         flags |= bitcoinconsensus::VERIFY_NULLDUMMY;
     }
     flags
