@@ -83,6 +83,7 @@ fn maybe_reindex(&self, potential_tip: &DiskBlockHeader) -> Result<(), Blockchai
 
         // If the best chain height is lower, it needs to be updated
         if *height > best_height {
+            warn!("Found block with height {height}, while the current best chain is at {best_height}. Reindexing.");
             self.reindex_chain()?;
         }
     }

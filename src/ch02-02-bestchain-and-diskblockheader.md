@@ -37,7 +37,6 @@ The `BestChain` struct is an internal representation of the chain we are in and 
 - `depth`: The number of blocks pilled after the genesis block (i.e., the height of the tip).
 - `validation_index`: The `BlockHash` up to which we have validated the chain.
 - `alternative_tips`: A vector of fork tip `BlockHash`es with a chance of becoming the best chain.
-- `assume_valid_index`: Height occupied by the assume-valid block (up to which we don't validate scripts).
 
 Filename: pruned_utreexo/chainstore.rs
 
@@ -49,7 +48,6 @@ pub struct BestChain {
     pub depth: u32,
     pub validation_index: BlockHash,
     pub alternative_tips: Vec<BlockHash>,
-    pub assume_valid_index: u32,
 }
 ```
 
