@@ -59,6 +59,15 @@ fn connect_block(
         }
     };
 
+    // Clone inputs only if a subscriber wants spent utxos
+    let inputs_for_notifications = self
+        .inner
+        .read()
+        .subscribers
+        .iter()
+        .any(|subscriber| subscriber.wants_spent_utxos())
+        .then(|| inputs.clone());
+
     self.validate_block_no_acc(block, height, inputs)?;
     let acc = Consensus::update_acc(&self.acc(), block, height, proof, del_hashes)?;
 
@@ -78,7 +87,7 @@ fn connect_block(
     }
 
     // Notify others we have a new block
-    self.notify(block, height);
+    self.notify(block, height, inputs_for_notifications.as_ref());
     Ok(height)
 }
 ```
