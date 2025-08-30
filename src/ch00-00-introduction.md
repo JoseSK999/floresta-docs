@@ -10,7 +10,11 @@ A key feature of Floresta is its use of the [utreexo accumulator](https://eprint
 
 Currently, the node can only operate in pruned mode, meaning it deletes block data after validation. Combined with utreexo, this design keeps storage requirements exceptionally low (< 1 GB).
 
-The ultimate vision for Floresta is to deliver a reliable and ultra-lightweight node implementation capable of running on low-resource devices, democratizing the access to the Bitcoin blockchain. However, keep in mind that Floresta remains **highly experimental software** ⚠️.
+The ultimate vision for Floresta is to deliver a reliable and ultra-lightweight node implementation capable of running on low-resource devices, democratizing the access to the Bitcoin blockchain.
+
+
+> ⚠️ Keep in mind that Floresta remains a **highly experimental software**, this means it can break and misinterpret the bitcoin protocol, **dont use Floresta to transact satoshis**. If you find any bug or anything related to floresta that you think is a bug, please open a issue on [Floresta Oficial Repository](https://github.com/vinteumorg/Floresta).
+
 
 ## About This Book
 
