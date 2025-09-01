@@ -133,7 +133,7 @@ Finally, you can also take a look at the `florestad/cli.rs` file to see the exac
 florestad --proxy 127.0.0.1:9050
 ```
 
-You may also want to disable `Assume-Utreexo`, the UTXO set snapshot sync we discussed in [Chapter 5](ch05-00-advanced-chain-validation-methods.md), which is enabled by default:
+You may also want to disable `Assume-Utreexo`, the UTXO set snapshot sync we discussed in [Chapter 5](ch05-00-advanced-chain-validation-methods.md#trusted-utxo-set-snapshots), which is enabled by default:
 
 ```bash
 # start the daemon from the genesis block
