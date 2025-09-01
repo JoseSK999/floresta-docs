@@ -122,7 +122,7 @@ fn main() {
 }
 ```
 
-You can see we first spawn a process that waits for the `Ctrl+C` signal, and when it's read this task writes `true` to the signal variable (an `Arc<RwLock<bool>>`). An `Arc` clone of this signal was passed to `UtreexoNode`, so it will "know" when to shut down (we saw how `UtreexoNode::new` required a kill signal in [Chapter 6.2](ch06-02-utreexonode-config-and-builder.md)).
+You can see we first spawn a process that waits for the `Ctrl+C` signal, and when it's read this task writes `true` to the signal variable (an `Arc<RwLock<bool>>`). Then the loop executes `florestad.stop().await;`, which simply replays the signal to the `UtreexoNode`, so it will "know" when to shut down (we saw how `UtreexoNode::new` required a kill signal in [Chapter 6.2](ch06-02-utreexonode-config-and-builder.md)).
 
 You may also have noticed that the first line of the main function is a feature-gated call to `console_subscriber::init();`. This sets up a tracing subscriber for [tokio-console](https://github.com/tokio-rs/console), an official utility from the Tokio project that lets you inspect all running async tasks in real time. This tool is super valuable for debugging complex async applications like Floresta. You can learn more about its usage for Floresta in the [Floresta doc folder](https://github.com/vinteumorg/Floresta/blob/master/doc/run.md#using-tokio-console).
 
