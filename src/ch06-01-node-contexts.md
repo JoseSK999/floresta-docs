@@ -14,7 +14,7 @@ The three node contexts in Floresta are:
 
 3. **RunningNode**: The primary context during normal operation, it starts operating after `ChainSelector` finishes. This context processes new blocks (even if `SyncNode` is still running) and handles user requests.
 
-`RunningNode` is the highest level context, which will automatically and internally switch to the other two contexts when a `UtreexoNode` is first instantiated, and then switch back. Hence, the `RunningNode` context is the default and high-level context that runs in `florestad`.
+`RunningNode` is the top-level context. When a `UtreexoNode` is first created, it will internally switch to the other contexts as needed, and then return to `RunningNode`. In practice, this makes `RunningNode` the default context used by `florestad` to run the node.
 
 ### The NodeContext Trait
 

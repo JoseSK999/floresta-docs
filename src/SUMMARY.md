@@ -35,7 +35,9 @@
   - [Reading and Writing Messages](ch07-01-reading-and-writing-messages.md)
   - [Handling Peer Messages](ch07-02-handling-peer-messages.md)
 
-- [Running Floresta: Daemon and CLI](ch08-00-floresta-daemon-and-cli.md)
+- [Running Floresta](ch08-00-running-floresta.md)
+  - [Floresta Daemon](ch08-01-floresta-daemon.md)
+  - [Floresta CLI](ch08-02-floresta-cli.md)
 
 - [Appendix](appendix-00.md)
   - [A - FlatChainStore Architecture](appendix-01-flat-chainstore.md)
