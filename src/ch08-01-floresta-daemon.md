@@ -165,7 +165,7 @@ First, the data directory is ensured to exist, and logging is initialized if req
 /// Actually runs florestad, spawning all modules and waiting until
 /// someone asks to stop.
 pub async fn start(&self) -> Result<(), FlorestadError> {
-    let data_dir = Self::data_dir_path(&self.config)?;
+    let data_dir = Self::data_dir_path(&self.config);
 
     // Create the data directory if it doesn't exist
     if !Path::new(&data_dir).exists() {
