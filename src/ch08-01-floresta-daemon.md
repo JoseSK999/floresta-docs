@@ -11,7 +11,7 @@ The very first line of the main function is a feature-gated call to `console_sub
 Then, you can see we build the `Config` from the CLI arguments and try to daemonize the process. After that, we spawn a process that waits for the `Ctrl+C` signal, and when it's read this task writes `true` to the signal variable (an `Arc<RwLock<bool>>`).
 
 ```rust
-# // Path: ../florestad/src/main.rs
+# // Path: ../bin/florestad/src/main.rs
 #
 fn main() {
     #[cfg(feature = "tokio-console")]
@@ -160,7 +160,7 @@ First, the data directory is ensured to exist, and logging is initialized if req
 > The Floresta data directory is the provided `--data-dir` CLI argument, or `$HOME/.floresta` if not provided.
 
 ```rust
-# // Path: ../florestad/src/florestad.rs
+# // Path: floresta-node/src/florestad.rs
 #
 /// Actually runs florestad, spawning all modules and waiting until
 /// someone asks to stop.

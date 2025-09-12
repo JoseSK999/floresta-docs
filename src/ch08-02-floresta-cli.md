@@ -10,7 +10,7 @@ The `floresta-rpc` library defines two traits: `FlorestaRPC` and `JsonRPCClient`
 - `JsonRPCClient` is implemented by clients, requiring only a single `call` method.
 
 ```rust
-# // Path: floresta-cli/src/rpc.rs
+# // Path: floresta-rpc/src/rpc.rs
 #
 /// A trait specifying all possible methods for floresta's json-rpc
 pub trait FlorestaRPC {
@@ -34,10 +34,10 @@ cargo run --bin floresta-cli -- --help
 
 ### JSON-RPC Client
 
-The `floresta-cli` client is implemented as a simple wrapper around the `jsonrpc` library, which implements the mentioned `JsonRPCClient` trait (and by extension, `FlorestaRPC`).
+`floresta-cli` uses a simple client that is also defined in `floresta-rpc`, available via the default `with-jsonrpc` feature. It is implemented as a simple wrapper around the `jsonrpc` library, which implements the mentioned `JsonRPCClient` trait, and by extension, `FlorestaRPC`.
 
 ```rust
-# // Path: floresta-cli/src/jsonrpc_client.rs
+# // Path: floresta-rpc/src/jsonrpc_client.rs
 #
 // Define a Client struct that wraps a jsonrpc::Client
 #[derive(Debug)]
@@ -45,7 +45,7 @@ pub struct Client(jsonrpc::Client);
 ```
 
 ```rust
-# // Path: floresta-cli/src/jsonrpc_client.rs
+# // Path: floresta-rpc/src/jsonrpc_client.rs
 #
 // Implement the JsonRPCClient trait for Client
 impl JsonRPCClient for Client {
