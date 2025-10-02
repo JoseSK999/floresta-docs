@@ -18,7 +18,7 @@ Filename: floresta-wire/src/p2p_wire/node.rs
 pub struct NodeCommon<Chain: ChainBackend> {
     // 1. Core Blockchain and Transient Data
     pub(crate) chain: Chain,
-    pub(crate) blocks: HashMap<BlockHash, (PeerId, UtreexoBlock)>,
+    pub(crate) blocks: HashMap<BlockHash, InflightBlock>,
     pub(crate) mempool: Arc<tokio::sync::Mutex<Mempool>>,
     pub(crate) block_filters: Option<Arc<NetworkFilters<FlatFiltersStore>>>,
     pub(crate) last_filter: BlockHash,

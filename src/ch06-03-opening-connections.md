@@ -217,6 +217,11 @@ pub(crate) async fn open_connection(
         },
     );
 
+    match kind {
+        ConnectionKind::Feeler => self.last_feeler = Instant::now(),
+        ConnectionKind::Regular(_) => self.last_connection = Instant::now(),
+        _ => {}
+    }
     self.peer_id_count += 1;
 
     Ok(())

@@ -125,10 +125,6 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                     Some(ReaderMessage::Error(e)) => {
                         return Err(e);
                     }
-                    Some(ReaderMessage::Block(block)) => {
-                        debug!("got a utreexo block from peer {}", self.id);
-                        self.send_to_node(PeerMessages::Block(block)).await;
-                    }
                     Some(ReaderMessage::Message(msg)) => {
                         self.handle_peer_message(msg).await?;
                     }
@@ -191,8 +187,7 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
 
 3. **Processing Peer Messages**: Simultaneously, the loop listens for messages from the TCP actor via `self.actor_receiver`. Depending on the type of message received:
     - Error: If an error is reported (closed channel or `ReaderMessage::Error`), the loop exits with the error.
-    - Block Message: If a block is received, it is forwarded to `UtreexoNode` using `send_to_node`.
-    - Generic Message: Other peer messages are processed by the `handle_peer_message` method.
+    - Message: Peer messages are processed by the `handle_peer_message` method.
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/peer.rs
@@ -224,10 +219,6 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                     # }
                     # Some(ReaderMessage::Error(e)) => {
                         # return Err(e);
-                    # }
-                    # Some(ReaderMessage::Block(block)) => {
-                        # debug!("got a utreexo block from peer {}", self.id);
-                        # self.send_to_node(PeerMessages::Block(block)).await;
                     # }
                     # Some(ReaderMessage::Message(msg)) => {
                         # self.handle_peer_message(msg).await?;
@@ -293,8 +284,8 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
 > ```rust
 > # // Path: floresta-wire/src/p2p_wire/peer.rs
 > #
-> const PING_TIMEOUT: u64 = 10 * 60;
-> const SEND_PING_TIMEOUT: u64 = 2 * 60;
+> const PING_TIMEOUT: u64 = 30;
+> const SEND_PING_TIMEOUT: u64 = 60;
 > ```
 
 ```rust
@@ -327,10 +318,6 @@ async fn peer_loop_inner(&mut self) -> Result<()> {
                     # }
                     # Some(ReaderMessage::Error(e)) => {
                         # return Err(e);
-                    # }
-                    # Some(ReaderMessage::Block(block)) => {
-                        # debug!("got a utreexo block from peer {}", self.id);
-                        # self.send_to_node(PeerMessages::Block(block)).await;
                     # }
                     # Some(ReaderMessage::Message(msg)) => {
                         # self.handle_peer_message(msg).await?;

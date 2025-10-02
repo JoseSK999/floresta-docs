@@ -39,20 +39,18 @@ pub fn create_actors<R: AsyncRead + Unpin + Send>(
 
 This `MessageActor` implements a `run` method, which independently handles all incoming messages from the corresponding peer, and sends them to the `Peer` type.
 
-Note that the messages of the channel between `MessageActor` and `Peer` are of type `ReaderMessage`. Let's briefly see what is this type, which is also defined in _peer.rs_.
+Note that the messages of the channel between `MessageActor` and `Peer` are of type `ReaderMessage`. Let's briefly inspect this enum, which is also defined in _peer.rs_.
 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/peer.rs
 #
 pub enum ReaderMessage {
-    Block(UtreexoBlock),
     Message(NetworkMessage),
     Error(PeerError),
 }
 ```
 
-- `UtreexoBlock` is a type defined in `floresta-chain` that wraps the `bitcoin::Block` type as well as the utreexo data needed for validation (proofs and spent UTXOs).
-- `NetworkMessage` is a type from the `bitcoin` crate (used here for all messages that are not `ReaderMessage::Block`).
+- `NetworkMessage` is a type from the `bitcoin` crate, used for all P2P messages.
 - `PeerError` is the unified error type for the `Peer` struct (similar to how `WireError` is the error type for `UtreexoNode`).
 
 ### Reading Messages
@@ -64,14 +62,8 @@ The `run` method simply invokes the `inner` method, and if it fails we notify th
 #
 async fn inner(&mut self) -> std::result::Result<(), PeerError> {
     loop {
-        match self.transport.read_message().await? {
-            UtreexoMessage::Standard(msg) => {
-                self.sender.send(ReaderMessage::Message(msg))?;
-            }
-            UtreexoMessage::Block(block) => {
-                self.sender.send(ReaderMessage::Block(block))?;
-            }
-        }
+        let msg = self.transport.read_message().await?;
+        self.sender.send(ReaderMessage::Message(msg))?;
     }
 }
 
@@ -83,9 +75,7 @@ pub async fn run(mut self) -> Result<()> {
 }
 ```
 
-We see two kinds of messages that we get from the transport component: standard messages (`bitcoin::p2p::message::NetworkMessage`) and block messages (the `UtreexoBlock` we have mentioned).
-
-The `read_message` method, implemented in _transport.rs_ will actually read all the data from the peer, using either the v1 or v2 transport protocols.
+The `read_message` method, implemented in _transport.rs_, will actually read all the data from the peer, using either the v1 or v2 transport protocols.
 
 ### Writing Messages
 
