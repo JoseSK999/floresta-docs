@@ -1,7 +1,6 @@
 [book]
 authors = ["JoseSK999"]
 language = "en"
-multilingual = false
 src = "src"
 title = "Floresta Docs"
 
