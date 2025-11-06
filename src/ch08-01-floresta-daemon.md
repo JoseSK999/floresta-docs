@@ -6,28 +6,34 @@ We'll first look at how the binary sets things up, and then we'll dive into `Flo
 
 ### Florestad
 
-The very first line of the main function is a feature-gated call to `console_subscriber::init();`. This sets up a tracing subscriber for [tokio-console](https://github.com/tokio-rs/console), an official utility from the Tokio project that lets you inspect all running async tasks in real time. This tool is super valuable for debugging complex async applications like Floresta. You can learn more about its usage for Floresta in the [Floresta doc folder](https://github.com/vinteumorg/Floresta/blob/master/doc/run.md#using-tokio-console).
+The very first thing we do in the `florestad` main function is parsing any CLI argument and create the actual data directory, if not already present. Then, we build the `Config` from the CLI arguments and try to daemonize the process.
 
-Then, you can see we build the `Config` from the CLI arguments and try to daemonize the process. After that, we spawn a process that waits for the `Ctrl+C` signal, and when it's read this task writes `true` to the signal variable (an `Arc<RwLock<bool>>`).
+Also, if logging to `stdout` or a file is enabled, we call `init_logging` to initialize a tracing subscriber. This subscriber may also include [tokio-console](https://github.com/tokio-rs/console) (a utility from the Tokio project that lets you inspect all running async tasks in real time) if you run `florestad` with the `tokio-console` feature. You can learn more about tokio console usage in the [Floresta doc folder](https://github.com/vinteumorg/Floresta/blob/master/doc/run.md#using-tokio-console).
+
+After that, we spawn a process that waits for the `Ctrl+C` signal, and when it's read this task writes `true` to the signal variable (an `Arc<RwLock<bool>>`).
 
 ```rust
 # // Path: ../bin/florestad/src/main.rs
 #
 fn main() {
-    #[cfg(feature = "tokio-console")]
-    {
-        // Initialize tokio-console for debugging
-        console_subscriber::init();
-    }
-
     let params = Cli::parse();
+
+    // If not provided defaults to `$HOME/.floresta`. Uses a subdirectory for non-mainnet networks.
+    let data_dir = data_dir_path(params.data_dir, params.network);
+
+    // Create the data directory if it doesn't exist
+    fs::create_dir_all(&data_dir).unwrap_or_else(|e| {
+        eprintln!("Could not create data dir {data_dir:?}: {e}");
+        exit(1);
+    });
+
     let config = Config {
+        data_dir,
         // Setting the config from the CLI arguments
         // ...
         # disable_dns_seeds: params.connect.is_some() || params.disable_dns_seeds,
         # network: params.network,
         # debug: params.debug,
-        # data_dir: params.data_dir.clone(),
         # cfilters: !params.no_cfilters,
         # proxy: params.proxy,
         # assume_utreexo: !params.no_assume_utreexo,
@@ -69,6 +75,18 @@ fn main() {
         # daemon.start().expect("Failed to daemonize");
     }
 
+    let mut _log_guard: Option<WorkerGuard> = None;
+    if config.log_to_stdout || config.log_to_file {
+        let dir = &config.data_dir;
+
+        // Initialize logging (stdout/file) per config and retain the file guard
+        _log_guard = init_logging(dir, config.log_to_file, config.log_to_stdout, config.debug)
+            .unwrap_or_else(|e| {
+                eprintln!("Logging file couldn't be created at {dir:?}: {e}");
+                exit(1);
+            });
+    }
+
     let _rt = tokio::runtime::Builder::new_multi_thread()
         // Setting the runtime
         // ...
@@ -101,7 +119,7 @@ fn main() {
         // wait for shutdown
         loop {
             if florestad.should_stop().await || *_signal.read().await {
-                info!("Stopping Florestad");
+                info!("Stopping Floresta");
                 florestad.stop().await;
                 let _ = timeout(Duration::from_secs(10), florestad.wait_shutdown()).await;
                 break;
@@ -115,6 +133,7 @@ fn main() {
     # // due to the rpc server, causing a panic.
     drop(florestad);
     drop(_rt);
+    drop(_log_guard); // flush file logs on exit
 }
 ```
 
@@ -146,7 +165,7 @@ As we have just mentioned, `Florestad` and its methods are implemented in the `f
 
 At a high level, the method:
 
-1. Prepares the data directory and logger.
+1. Validates the data directory.
 2. Loads the watch-only wallet.
 3. Loads the blockchain database and optional compact filters.
 4. Builds a `UtreexoNodeConfig` and starts the `UtreexoNode`.
@@ -155,34 +174,21 @@ At a high level, the method:
 
 Let’s walk through the important steps.
 
-First, the data directory is ensured to exist, and logging is initialized if requested.
-
-> The Floresta data directory is the provided `--data-dir` CLI argument, or `$HOME/.floresta` if not provided.
+First, the data directory is ensured to exist and be writable, or else this library function returns error (note the `florestad` binary creates such directory).
 
 ```rust
 # // Path: floresta-node/src/florestad.rs
 #
 /// Actually runs florestad, spawning all modules and waiting until
 /// someone asks to stop.
+///
+/// This function will return an error if the configured data directory path is not an
+/// **existing and writable directory**, or cannot be validated as such.
 pub async fn start(&self) -> Result<(), FlorestadError> {
-    let data_dir = Self::data_dir_path(&self.config);
+    let data_dir = &self.config.data_dir;
 
-    // Create the data directory if it doesn't exist
-    if !Path::new(&data_dir).exists() {
-        fs::create_dir_all(&data_dir)
-            .map_err(|e| FlorestadError::CouldNotCreateDataDir(data_dir.clone(), e))?;
-    }
-
-    // Setup global logger
-    if self.config.log_to_stdout || self.config.log_to_file {
-        Self::setup_logger(
-            &data_dir,
-            self.config.log_to_file,
-            self.config.log_to_stdout,
-            self.config.debug,
-        )
-        .map_err(FlorestadError::CouldNotInitializeLogger)?;
-    }
+    // Check that the directory exists and is writable
+    Florestad::validate_data_dir(data_dir)?;
 ```
 
 Then the watch-only wallet is loaded, and most importantly, the blockchain database (as an `Arc<ChainState<FlatChainStore>>`):

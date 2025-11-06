@@ -5,7 +5,7 @@ As we can see below, the only thing the `Peer::create_peer` method does is initi
 ```rust
 # // Path: floresta-wire/src/p2p_wire/peer.rs
 #
-pub async fn create_peer<W: AsyncWrite + Unpin + Send + Sync + 'static>(
+pub fn create_peer<W: AsyncWrite + Unpin + Send + Sync + 'static>(
     // ...
     # id: u32,
     # mempool: Arc<Mutex<Mempool>>,
@@ -63,8 +63,7 @@ pub async fn read_loop(mut self) -> Result<()> {
     # if err.is_err() {
         # debug!("Peer {} connection loop closed: {err:?}", self.id);
     # }
-    # self.send_to_node(PeerMessages::Disconnected(self.address_id))
-        # .await;
+    # self.send_to_node(PeerMessages::Disconnected(self.address_id));
     # // force the stream to shutdown to prevent leaking resources
     # if let Err(shutdown_err) = self.writer.shutdown().await {
         # debug!(

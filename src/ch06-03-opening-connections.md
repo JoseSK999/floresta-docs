@@ -9,7 +9,7 @@ The `maybe_open_connection` method determines whether the node should establish 
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub(crate) async fn maybe_open_connection(
+pub(crate) fn maybe_open_connection(
     &mut self,
     required_service: ServiceFlags,
 ) -> Result<(), WireError> {
@@ -22,14 +22,15 @@ pub(crate) async fn maybe_open_connection(
     // If we've tried getting some connections, but the addresses we have are not
     // working. Try getting some more addresses from DNS
     self.maybe_ask_for_dns_peers();
-    self.maybe_use_hadcoded_addresses();
+    let needs_utreexo = required_service.has(service_flags::UTREEXO.into());
+    self.maybe_use_hadcoded_addresses(needs_utreexo);
 
     // Try to connect with manually added peers
-    self.maybe_open_connection_with_added_peers().await?;
+    self.maybe_open_connection_with_added_peers()?;
 
     let connection_kind = ConnectionKind::Regular(required_service);
     if self.peers.len() < T::MAX_OUTGOING_PEERS {
-        self.create_connection(connection_kind).await?;
+        self.create_connection(connection_kind)?;
     }
 
     Ok(())
@@ -73,17 +74,13 @@ If no fixed peer is specified, we get a suitable peer address (or `LocalAddress`
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub(crate) async fn create_connection(
-    &mut self,
-    kind: ConnectionKind,
-) -> Result<(), WireError> {
+pub(crate) fn create_connection(&mut self, kind: ConnectionKind) -> Result<(), WireError> {
     let required_services = match kind {
-        ConnectionKind::Feeler => ServiceFlags::NONE,
         ConnectionKind::Regular(services) => services,
-        ConnectionKind::Extra => ServiceFlags::NONE,
+        _ => ServiceFlags::NONE,
     };
 
-    let (peer_id, address) = self
+    let address = self
         .fixed_peer
         .as_ref()
         .map(|addr| (0, addr.clone()))
@@ -92,11 +89,18 @@ pub(crate) async fn create_connection(
                 required_services,
                 matches!(kind, ConnectionKind::Feeler),
             )
-        })
-        .ok_or(WireError::NoAddressesAvailable)?;
+        });
 
-    # debug!("attempting connection with address={address:?} kind={kind:?}",);
-    #
+    let Some((peer_id, address)) = address else {
+        // No peers with the desired services are known, load hardcoded addresses
+        let net = self.network;
+        self.address_man.add_fixed_addresses(net);
+
+        return Err(WireError::NoAddressesAvailable);
+    };
+
+    debug!("attempting connection with address={address:?} kind={kind:?}",);
+
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -125,8 +129,7 @@ pub(crate) async fn create_connection(
         || kind == ConnectionKind::Regular(UTREEXO.into())
         || is_fixed;
 
-    self.open_connection(kind, peer_id, address, allow_v1)
-        .await?;
+    self.open_connection(kind, peer_id, address, allow_v1)?;
 
     Ok(())
 }
@@ -145,7 +148,7 @@ Then, depending on the value of `self.socks5` we will call `UtreexoNode::open_pr
 ```rust
 # // Path: floresta-wire/src/p2p_wire/node.rs
 #
-pub(crate) async fn open_connection(
+pub(crate) fn open_connection(
     &mut self,
     kind: ConnectionKind,
     peer_id: usize,

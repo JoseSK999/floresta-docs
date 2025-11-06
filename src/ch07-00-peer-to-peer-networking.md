@@ -56,8 +56,7 @@ pub(crate) async fn open_non_proxy_connection(
         user_agent,
         cancellation_sender,
         transport_protocol,
-    )
-    .await;
+    );
 
     Ok(())
 }
@@ -123,8 +122,8 @@ pub(crate) async fn open_proxy_connection(
         # user_agent,
         # cancellation_sender,
         # transport_protocol,
-    )
-    .await;
+    );
+
     Ok(())
 }
 ```
