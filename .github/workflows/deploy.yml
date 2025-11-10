@@ -20,26 +20,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install latest mdbook
+      - name: Install mdbook
         run: |
-          tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
-          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
-          mkdir mdbook
-          curl -sSL $url | tar -xz --directory=./mdbook
-          echo "$PWD/mdbook" >> $GITHUB_PATH
+          cargo install mdbook --locked
+          mdbook -V
 
       - name: Install mdbook-linkcheck
         run: |
-          mkdir -p mdbook-linkcheck
-          cd mdbook-linkcheck
-          curl -L https://github.com/Michael-F-Bryan/mdbook-linkcheck/releases/latest/download/mdbook-linkcheck.x86_64-unknown-linux-gnu.zip -o mdbook-linkcheck.zip
-          unzip mdbook-linkcheck.zip
-          chmod +x mdbook-linkcheck
-          echo "$PWD" >> $GITHUB_PATH
+          cargo install mdbook-linkcheck --locked
+          mdbook-linkcheck -V
 
       - name: Install mdbook-quiz
         run: |
           cargo install mdbook-quiz --locked
+          mdbook-quiz -V
 
       - name: Build Book
         run: |
